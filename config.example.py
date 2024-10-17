@@ -1,0 +1,17 @@
+USE_CUDA = True
+FILENAME = "4_mcm_1"
+
+# training
+D_MODEL = 8
+NUM_HEADS = 4
+NUM_ENCODER_LAYERS = 2
+NUM_DECODER_LAYERS = 2
+
+DATA_FILE = "data/N_sites_4/sites_4__id_0"
+
+EPOCHS = 20
+LEARN_RATE = 10e-3
+
+# generation
+TRIALS = 20
+SEQUENCES_PER_TRIAL = 500
