@@ -119,11 +119,13 @@ def train(
         print("training loss: ", train_loss)
         print("validation loss: ", validate_loss)
         print("epoch time: ", process_time() - epoch_start_time)
-        logs.extend((
-            f"training loss: {train_loss}\n", 
-            f"validation loss: {validate_loss}\n",
-            f"epoch time: {process_time() - epoch_start_time}\n", 
-        ))
+        logs.extend(
+            (
+                f"training loss: {train_loss}\n",
+                f"validation loss: {validate_loss}\n",
+                f"epoch time: {process_time() - epoch_start_time}\n",
+            )
+        )
 
     print("total training time: ", process_time() - start_time, "s")
     logs.extend((f"total training time: {process_time() - start_time} s\n"))
@@ -131,15 +133,15 @@ def train(
 
 if __name__ == "__main__":
     from config import (
-        USE_CUDA,
         D_MODEL,
-        NUM_HEADS,
-        NUM_ENCODER_LAYERS,
-        NUM_DECODER_LAYERS,
         DATA_FILE,
-        FILENAME,
         EPOCHS,
+        FILENAME,
         LEARN_RATE,
+        NUM_DECODER_LAYERS,
+        NUM_ENCODER_LAYERS,
+        NUM_HEADS,
+        USE_CUDA,
     )
 
     info_file = info_dir(f"{FILENAME}.info")
@@ -176,18 +178,28 @@ if __name__ == "__main__":
 
     if os.path.isfile(weights_file):
         model.load_state_dict(torch.load(weights_file, weights_only=True))
-        logs.extend((
-            "\n",
-            "=" * 80 + "\n",
-            f"Starting training with weights loaded from {weights_file}\n"
-        ))
+
+        print(f"model weights loaded from {weights_file}")
+        logs.extend(
+            (
+                "\n",
+                "=" * 80 + "\n",
+                f"Starting training with weights loaded from {weights_file}\n",
+            )
+        )
+
     else:
-        logs.extend(("=" * 80 + "\n", "Starting training with newly initialised weights\n"))
-    logs.extend((
-        f"datafile: {DATA_FILE}\n",
-        f"training sequence count: {len(dataset)}\n",
-        f"validation sequence count: {len(validation_dataset)}\n"
-    ))
+        logs.extend(
+            ("=" * 80 + "\n", "Starting training with newly initialised weights\n")
+        )
+
+    logs.extend(
+        (
+            f"datafile: {DATA_FILE}\n",
+            f"training sequence count: {len(dataset)}\n",
+            f"validation sequence count: {len(validation_dataset)}\n",
+        )
+    )
 
     # generation is dependent on this file, change with care
     if not os.path.isfile(info_file):
@@ -204,12 +216,15 @@ if __name__ == "__main__":
 
     try:
         train(model, EPOCHS, opt, loss_fn, dataloader, val_dataloader, device)
+
     except KeyboardInterrupt:
         logs.append("training stopped with KeyboardInterrupt\n")
         print("training stopped due to KeyboardInterrupt")
 
     torch.save(model.state_dict(), weights_file)
+
     with open(log_file, "a+") as file:
         file.writelines(logs)
+
     print(f"weights saved in {weights_file}")
     print(f"logs written to {log_file}")
