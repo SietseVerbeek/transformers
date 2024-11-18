@@ -8,6 +8,7 @@ from torch.nn.modules.loss import _Loss
 from torch.optim.optimizer import Optimizer
 from torch.utils.data import DataLoader
 
+from config import BETAS
 from models.transformer import Transformer
 from utils.datasets import MCMDataset
 from utils.fs import info_dir, results_dir
@@ -142,6 +143,7 @@ def main(
     num_encoder_layers: int,
     num_heads: int,
     use_cuda: bool,
+    betas: tuple[float, float],
 ):
     info_file = info_dir(f"{filename}.info")
     weights_file = info_dir(f"{filename}.pth")
@@ -172,7 +174,7 @@ def main(
         dropout=0.1,
     ).to(device)
 
-    opt = torch.optim.Adam(model.parameters(), lr=learn_rate, betas=(0.9, 0.98))
+    opt = torch.optim.Adam(model.parameters(), lr=learn_rate, betas=betas)
     loss_fn = nn.CrossEntropyLoss(ignore_index=4)
 
     if os.path.isfile(weights_file):
@@ -240,6 +242,7 @@ if __name__ == "__main__":
         NUM_ENCODER_LAYERS,
         NUM_HEADS,
         USE_CUDA,
+        BETAS,
     )
 
     main(
@@ -252,4 +255,5 @@ if __name__ == "__main__":
         NUM_ENCODER_LAYERS,
         NUM_HEADS,
         USE_CUDA,
+        BETAS,
     )

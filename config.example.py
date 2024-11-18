@@ -9,6 +9,8 @@ NUM_DECODER_LAYERS = 2
 
 DATA_FILE = "data/N_sites_4/sites_4__id_0"
 
+BETAS = (0.9, 0.98)
+
 EPOCHS = 20
 LEARN_RATE = 10e-3
 
