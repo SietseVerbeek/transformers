@@ -99,6 +99,7 @@ def train(
     loss_fn: _Loss,
     train_dataloader: DataLoader,
     validation_dataloader: DataLoader,
+    logs: list[str],
     device="cuda",
 ):
     start_time = process_time()
@@ -131,49 +132,47 @@ def train(
     logs.extend((f"total training time: {process_time() - start_time} s\n"))
 
 
-if __name__ == "__main__":
-    from config import (
-        D_MODEL,
-        DATA_FILE,
-        EPOCHS,
-        FILENAME,
-        LEARN_RATE,
-        NUM_DECODER_LAYERS,
-        NUM_ENCODER_LAYERS,
-        NUM_HEADS,
-        USE_CUDA,
-    )
+def main(
+    d_model: int,
+    data_file: str,
+    epochs: int,
+    filename: str,
+    learn_rate: float,
+    num_decoder_layers: int,
+    num_encoder_layers: int,
+    num_heads: int,
+    use_cuda: bool,
+):
+    info_file = info_dir(f"{filename}.info")
+    weights_file = info_dir(f"{filename}.pth")
+    tgts_file = info_dir(f"{filename}.npz")
 
-    info_file = info_dir(f"{FILENAME}.info")
-    weights_file = info_dir(f"{FILENAME}.pth")
-    tgts_file = info_dir(f"{FILENAME}.npz")
-
-    log_file = results_dir(f"{FILENAME}.log")
+    log_file = results_dir(f"{filename}.log")
     logs = []
 
-    dataset = MCMDataset(DATA_FILE)
+    dataset = MCMDataset(data_file)
     dataloader = DataLoader(dataset, batch_size=500, shuffle=True)
 
     unique_tgts, tgt_counts = dataset.unique_tgts
     tgt_frac = tgt_counts / len(dataset)
     np.savez(tgts_file, unique_tgts=unique_tgts, tgt_frac=tgt_frac)
 
-    validation_dataset = MCMDataset(DATA_FILE, train=False)
+    validation_dataset = MCMDataset(data_file, train=False)
     val_dataloader = DataLoader(validation_dataset, batch_size=64, shuffle=True)
 
-    device = "cuda" if USE_CUDA else "cpu"
+    device = "cuda" if use_cuda else "cpu"
 
     model = Transformer(
         num_tokens=5,
-        d_model=D_MODEL,
+        d_model=d_model,
         padding_idx=4,
-        num_heads=NUM_HEADS,
-        num_encoder_layers=NUM_ENCODER_LAYERS,
-        num_decoder_layers=NUM_DECODER_LAYERS,
+        num_heads=num_heads,
+        num_encoder_layers=num_encoder_layers,
+        num_decoder_layers=num_decoder_layers,
         dropout=0.1,
     ).to(device)
 
-    opt = torch.optim.Adam(model.parameters(), lr=LEARN_RATE, betas=(0.9, 0.98))
+    opt = torch.optim.Adam(model.parameters(), lr=learn_rate, betas=(0.9, 0.98))
     loss_fn = nn.CrossEntropyLoss(ignore_index=4)
 
     if os.path.isfile(weights_file):
@@ -195,7 +194,7 @@ if __name__ == "__main__":
 
     logs.extend(
         (
-            f"datafile: {DATA_FILE}\n",
+            f"datafile: {data_file}\n",
             f"training sequence count: {len(dataset)}\n",
             f"validation sequence count: {len(validation_dataset)}\n",
         )
@@ -206,16 +205,16 @@ if __name__ == "__main__":
         with open(info_file, "w+") as file:
             lines = [
                 "Sequence generation Transformer model info\n",
-                f"Model dimensions: d_model = {D_MODEL}\n",
-                f"Attention heads: num_heads = {NUM_HEADS}\n",
-                f"Encoder layers: num_encoder_layers = {NUM_ENCODER_LAYERS}\n",
-                f"Decoder layers: num_decoder_layers = {NUM_DECODER_LAYERS}\n",
+                f"Model dimensions: d_model = {d_model}\n",
+                f"Attention heads: num_heads = {num_heads}\n",
+                f"Encoder layers: num_encoder_layers = {num_encoder_layers}\n",
+                f"Decoder layers: num_decoder_layers = {num_decoder_layers}\n",
                 "=" * 80 + "\n\n",
             ]
             file.writelines(lines)
 
     try:
-        train(model, EPOCHS, opt, loss_fn, dataloader, val_dataloader, device)
+        train(model, epochs, opt, loss_fn, dataloader, val_dataloader, logs, device)
 
     except KeyboardInterrupt:
         logs.append("training stopped with KeyboardInterrupt\n")
@@ -228,3 +227,29 @@ if __name__ == "__main__":
 
     print(f"weights saved in {weights_file}")
     print(f"logs written to {log_file}")
+
+
+if __name__ == "__main__":
+    from config import (
+        D_MODEL,
+        DATA_FILE,
+        EPOCHS,
+        FILENAME,
+        LEARN_RATE,
+        NUM_DECODER_LAYERS,
+        NUM_ENCODER_LAYERS,
+        NUM_HEADS,
+        USE_CUDA,
+    )
+
+    main(
+        D_MODEL,
+        DATA_FILE,
+        EPOCHS,
+        FILENAME,
+        LEARN_RATE,
+        NUM_DECODER_LAYERS,
+        NUM_ENCODER_LAYERS,
+        NUM_HEADS,
+        USE_CUDA,
+    )

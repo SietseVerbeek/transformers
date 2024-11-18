@@ -79,18 +79,16 @@ def plot_prob_density_overlap(
     plt.savefig(filename)
 
 
-if __name__ == "__main__":
-    from config import FILENAME, SEQUENCES_PER_TRIAL, TRIALS, USE_CUDA
+def main(filename, sequences_per_trial, trials, use_cuda):
+    info_filename = info_dir(f"{filename}.info")
+    weights_filename = info_dir(f"{filename}.pth")
+    tgts_filename = info_dir(f"{filename}.npz")
 
-    info_filename = info_dir(f"{FILENAME}.info")
-    weights_filename = info_dir(f"{FILENAME}.pth")
-    tgts_filename = info_dir(f"{FILENAME}.npz")
+    static_fig_filename = results_dir(f"{filename}.jpg")
+    dynamic_fig_filename = results_dir(f"{filename}_dynamic.jpg")
+    log_file = results_dir(f"{filename}.log")
 
-    static_fig_filename = results_dir(f"{FILENAME}.jpg")
-    dynamic_fig_filename = results_dir(f"{FILENAME}_dynamic.jpg")
-    log_file = results_dir(f"{FILENAME}.log")
-
-    total_sequences = SEQUENCES_PER_TRIAL * TRIALS
+    total_sequences = sequences_per_trial * trials
 
     tgt_file = np.load(tgts_filename)
 
@@ -120,7 +118,7 @@ if __name__ == "__main__":
         num_encoder_layers = int(lines[2].split()[-1])
         num_decoder_layers = int(lines[3].split()[-1])
 
-    device = "cuda" if USE_CUDA else "cpu"
+    device = "cuda" if use_cuda else "cpu"
     model = Transformer(
         num_tokens=5,
         d_model=d_model,
@@ -136,18 +134,18 @@ if __name__ == "__main__":
     dynamic = np.empty((total_sequences, generate_length + 1))
     static = np.empty((total_sequences, generate_length + 1))
 
-    for i in range(TRIALS):
-        print(i * SEQUENCES_PER_TRIAL, end="\r")
-        dynamic[i * SEQUENCES_PER_TRIAL : (i + 1) * SEQUENCES_PER_TRIAL] = (
+    for i in range(trials):
+        print(i * sequences_per_trial, end="\r")
+        dynamic[i * sequences_per_trial : (i + 1) * sequences_per_trial] = (
             generate_naked_sequences_dynamic(
-                model, SEQUENCES_PER_TRIAL, generate_length, device=device
+                model, sequences_per_trial, generate_length, device=device
             )
             .to("cpu")
             .numpy()
         )
-        static[i * SEQUENCES_PER_TRIAL : (i + 1) * SEQUENCES_PER_TRIAL] = (
+        static[i * sequences_per_trial : (i + 1) * sequences_per_trial] = (
             generate_naked_sequences(
-                model, SEQUENCES_PER_TRIAL, generate_length, device=device
+                model, sequences_per_trial, generate_length, device=device
             )
             .to("cpu")
             .numpy()
@@ -161,6 +159,9 @@ if __name__ == "__main__":
 
     fracs_static = counts_static / np.sum(mask_static)
     fracs_dynamic = counts_dynamic / np.sum(mask_dynamic)
+
+    fracs_static[fracs_static == 0] = 10e-20
+    fracs_dynamic[fracs_dynamic == 0] = 10e-20
 
     plot_prob_density_overlap(static_fig_filename, tgt_frac, fracs_static)
     plot_prob_density_overlap(dynamic_fig_filename, tgt_frac, fracs_dynamic)
@@ -206,3 +207,9 @@ if __name__ == "__main__":
 
     print(f"figure saved to {static_fig_filename}")
     print(f"logs written to {log_file}")
+
+
+if __name__ == "__main__":
+    from config import FILENAME, SEQUENCES_PER_TRIAL, TRIALS, USE_CUDA
+
+    main(FILENAME, SEQUENCES_PER_TRIAL, TRIALS, USE_CUDA)
