@@ -211,6 +211,8 @@ def main(
                 f"Attention heads: num_heads = {num_heads}\n",
                 f"Encoder layers: num_encoder_layers = {num_encoder_layers}\n",
                 f"Decoder layers: num_decoder_layers = {num_decoder_layers}\n",
+                f"Learn rate: learn_rate = {learn_rate}\n",
+                f"Betas: betas = {betas}\n",
                 "=" * 80 + "\n\n",
             ]
             file.writelines(lines)
@@ -233,6 +235,7 @@ def main(
 
 if __name__ == "__main__":
     from config import (
+        BETAS,
         D_MODEL,
         DATA_FILE,
         EPOCHS,
@@ -242,7 +245,6 @@ if __name__ == "__main__":
         NUM_ENCODER_LAYERS,
         NUM_HEADS,
         USE_CUDA,
-        BETAS,
     )
 
     main(
