@@ -1,6 +1,7 @@
 import os
 from time import process_time
 
+import matplotlib.pyplot as plt
 import numpy as np
 import torch
 import torch.nn as nn
@@ -104,6 +105,7 @@ def train(
     device="cuda",
 ):
     start_time = process_time()
+    losses: list[int] = []
 
     for i in range(1, epochs + 1):
         epoch_start_time = process_time()
@@ -114,6 +116,7 @@ def train(
         train_loss = sequence_train_epoch(
             model, optimizer, loss_fn, train_dataloader, device
         )
+        losses.append(train_loss)
 
         validate_loss = sequence_validation_epoch(
             model, loss_fn, validation_dataloader, device
@@ -131,6 +134,8 @@ def train(
 
     print("total training time: ", process_time() - start_time, "s")
     logs.extend((f"total training time: {process_time() - start_time} s\n"))
+
+    return losses
 
 
 def main(
@@ -218,7 +223,11 @@ def main(
             file.writelines(lines)
 
     try:
-        train(model, epochs, opt, loss_fn, dataloader, val_dataloader, logs, device)
+        losses = train(
+            model, epochs, opt, loss_fn, dataloader, val_dataloader, logs, device
+        )
+        plt.plot(losses)
+        plt.savefig(results_dir(filename + "_loss.jpg"))
 
     except KeyboardInterrupt:
         logs.append("training stopped with KeyboardInterrupt\n")
