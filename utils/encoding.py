@@ -4,6 +4,7 @@ import torch
 import torch.nn as nn
 
 
+# adjusted from pytorch examples https://github.com/pytorch/examples/tree/main/word_language_model
 class PositionalEncoding(nn.Module):
     r"""Inject some information about the relative or absolute position of the tokens in the sequence.
         The positional encodings have the same dimension as the embeddings, so that the two can be summed.
