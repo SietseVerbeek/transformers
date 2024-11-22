@@ -1,9 +1,6 @@
 import numpy as np
 import numpy.typing as npt
-
-from torch.utils.data import Dataset, TensorDataset
-import torch
-import time
+from torch.utils.data import Dataset
 
 
 def generate_random_data(k: int, len: int = 8):
@@ -90,7 +87,7 @@ def srs_tgts_from_samples(arr: npt.NDArray, pad_token):
     src_lengths = np.zeros((samples), dtype=np.int8)
     baap = samples // (length + 1)
     for i in range(length):
-        src_lengths[i * baap:(i+1) * baap] = i
+        src_lengths[i * baap : (i + 1) * baap] = i
 
     # rng = np.random.default_rng()
     # src_lengths = rng.integers(0, length + 1, size=(samples))
@@ -202,5 +199,6 @@ class MCMDataset(Dataset):
     def __len__(self) -> int:
         return self.data.shape[0]
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     PaddedSrcSequenceDataset(1000, 10, 4)
