@@ -212,6 +212,7 @@ def main(
         with open(info_file, "w+") as file:
             lines = [
                 "Sequence generation Transformer model info\n",
+                f"Training file: {data_file}\n",
                 f"Model dimensions: d_model = {d_model}\n",
                 f"Attention heads: num_heads = {num_heads}\n",
                 f"Encoder layers: num_encoder_layers = {num_encoder_layers}\n",

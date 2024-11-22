@@ -112,7 +112,7 @@ def main(filename, sequences_per_trial, trials, use_cuda):
     )
 
     with open(info_filename, "r") as file:
-        lines = file.readlines()[1:]
+        lines = file.readlines()[2:]
         d_model = int(lines[0].split()[-1])
         num_heads = int(lines[1].split()[-1])
         num_encoder_layers = int(lines[2].split()[-1])
