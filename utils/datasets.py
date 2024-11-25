@@ -200,5 +200,17 @@ class MCMDataset(Dataset):
         return self.data.shape[0]
 
 
-if __name__ == "__main__":
-    PaddedSrcSequenceDataset(1000, 10, 4)
+class PartitionDataset(Dataset):
+    def __init__(self, file_name) -> None:
+        super().__init__()
+        data = np.load(file_name)
+        self.data = data['configs']
+        self.groupings = data['groupings']
+        self.dist = data['distribution']
+
+    def __getitem__(self, index):
+        group_idx = np.searchsorted(self.dist, index)
+        return self.data[index], self.groupings[group_idx]
+
+    def __len__(self) -> int:
+        return self.data.shape[0]
