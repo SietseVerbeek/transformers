@@ -155,7 +155,7 @@ class PaddedSrcSequenceDataset(Dataset):
         return data
 
 
-def load_from_txt(file_name: str) -> npt.NDArray:
+def load_from_txt(file_name: str) -> npt.NDArray[np.uint8]:
     """
     Load spin configurations from file. Must be text file with spin
     configurations saved as rows. Lines starting with # are considered
@@ -175,7 +175,7 @@ def load_from_txt(file_name: str) -> npt.NDArray:
             if not line.strip().startswith("#") and line.strip()
         ]
 
-    return np.array(data)
+    return np.array(data, dtype=np.uint8)
 
 
 class MCMDataset(Dataset):
