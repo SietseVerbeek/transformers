@@ -11,7 +11,7 @@ from torch.utils.data import DataLoader
 
 from config import BETAS
 from models.transformer import Transformer
-from utils.datasets import MCMDataset
+from utils.datasets import MCMPaddedDataset
 from utils.fs import info_dir, results_dir
 from utils.masking import create_mask
 
@@ -105,7 +105,7 @@ def train(
     device="cuda",
 ):
     start_time = process_time()
-    losses: list[int] = []
+    losses: list[float] = []
 
     for i in range(1, epochs + 1):
         epoch_start_time = process_time()
@@ -157,14 +157,14 @@ def main(
     log_file = results_dir(f"{filename}.log")
     logs = []
 
-    dataset = MCMDataset(data_file)
+    dataset = MCMPaddedDataset(data_file)
     dataloader = DataLoader(dataset, batch_size=500, shuffle=True)
 
     unique_tgts, tgt_counts = dataset.unique_tgts
     tgt_frac = tgt_counts / len(dataset)
     np.savez(tgts_file, unique_tgts=unique_tgts, tgt_frac=tgt_frac)
 
-    validation_dataset = MCMDataset(data_file, train=False)
+    validation_dataset = MCMPaddedDataset(data_file, train=False)
     val_dataloader = DataLoader(validation_dataset, batch_size=64, shuffle=True)
 
     device = "cuda" if use_cuda else "cpu"

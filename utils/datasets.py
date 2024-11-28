@@ -178,7 +178,7 @@ def load_from_txt(file_name: str) -> npt.NDArray[np.uint8]:
     return np.array(data, dtype=np.uint8)
 
 
-class MCMDataset(Dataset):
+class MCMPaddedDataset(Dataset):
     def __init__(self, file_name: str, train=True) -> None:
         super().__init__()
         tmp = load_from_txt(file_name)
@@ -195,6 +195,26 @@ class MCMDataset(Dataset):
 
     def __getitem__(self, index):
         return self.data[index, 0], self.data[index, 1]
+
+    def __len__(self) -> int:
+        return self.data.shape[0]
+
+
+class MCMEncoderDataset(Dataset):
+    def __init__(self, file_name: str, train=True) -> None:
+        super().__init__()
+        samples = load_from_txt(file_name)
+        samples = np.insert(samples, 0, 2, axis=-1).astype(np.int_)
+
+        if train:
+            self.data = samples[samples.shape[0] // 9 :]
+        else:
+            self.data = samples[: samples.shape[0] // 9]
+
+        self.unique_tgts = np.unique(self.data[:, 1:], axis=0, return_counts=True)
+
+    def __getitem__(self, index):
+        return self.data[index, :-1], self.data[index, 1:]
 
     def __len__(self) -> int:
         return self.data.shape[0]
