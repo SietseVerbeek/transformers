@@ -221,16 +221,19 @@ class MCMEncoderDataset(Dataset):
 
 
 class PartitionDataset(Dataset):
-    def __init__(self, file_name) -> None:
+    def __init__(self, file_name, validation=False) -> None:
         super().__init__()
         data = np.load(file_name)
-        self.data = data['configs']
-        self.groupings = data['groupings']
-        self.dist = data['distribution']
+        self.data = data['configs'].astype(np.int_)
+        self.mappings = data['mappings'].astype(np.int_)
+        self.map_ids = data['map_ids'].astype(np.int_)
+
+        if validation:
+            self.data = self.data[: self.data.shape[0] // 10]
+            self.map_ids = self.map_ids[: self.map_ids.shape[0] // 10]
 
     def __getitem__(self, index):
-        group_idx = np.searchsorted(self.dist, index)
-        return self.data[index], self.groupings[group_idx]
+        return self.data[index], self.mappings[self.map_ids[index]]
 
     def __len__(self) -> int:
         return self.data.shape[0]
