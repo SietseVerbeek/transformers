@@ -1,6 +1,7 @@
 import math
-from typing import Optional
+from typing import Optional, Self
 
+import torch
 import torch.nn as nn
 from torch import Tensor
 from utils.encoding import PositionalEncoding
@@ -20,6 +21,13 @@ class Transformer(nn.Module):
         super().__init__()
 
         self.d_model = d_model
+        self.num_tokens = num_tokens
+        self.padding_idx = padding_idx
+        self.num_heads = num_heads
+        self.num_encoder_layers = num_encoder_layers
+        self.num_decoder_layers = num_decoder_layers
+        self.dropout = dropout
+        
         self.embedding = nn.Embedding(num_tokens, d_model, padding_idx=padding_idx)
 
         self.positional_encoding = PositionalEncoding(
@@ -60,3 +68,53 @@ class Transformer(nn.Module):
         )
 
         return self.linear(transformer_out)
+
+
+    def to_file(self, filename: str) -> None:
+        """
+        Saves model parameters to a file, save file can be used to recreate
+        the model object without the model state using the from_file classmethod.
+
+        Filename is relative
+        """
+
+        params = {
+            "num_token": self.num_tokens,
+            "d_model": self.d_model,
+            "padding_idx": self.padding_idx,
+            "num_heads": self.num_heads,
+            "num_encoder_layers": self.num_encoder_layers,
+            "num_decoder_layers": self.num_decoder_layers,
+            "dropout": self.dropout,
+        }
+
+        torch.save(params, filename)
+
+    @classmethod
+    def from_file(cls, filename: str) -> Self:
+        """
+        Loads model parameters from file, use on files created with to_file method.
+
+        Filename is relative
+        """
+
+
+        params = torch.load(filename, weights_only=True)
+
+        num_tokens = params["num_token"]
+        d_model = params["d_model"]
+        padding_idx = params["padding_idx"]
+        num_heads = params["num_heads"]
+        num_encoder_layers = params["num_encoder_layers"]
+        num_decoder_layers = params["num_decoder_layers"]
+        dropout = params["dropout"]
+
+        return cls(
+            num_tokens = num_tokens,
+            d_model = d_model,
+            padding_idx = padding_idx,
+            num_heads = num_heads,
+            num_encoder_layers = num_encoder_layers,
+            num_decoder_layers = num_decoder_layers,
+            dropout = dropout,
+        )
