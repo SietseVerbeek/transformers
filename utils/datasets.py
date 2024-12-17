@@ -201,15 +201,10 @@ class MCMPaddedDataset(Dataset):
 
 
 class MCMEncoderDataset(Dataset):
-    def __init__(self, file_name: str, train=True) -> None:
+    def __init__(self, file_name: str) -> None:
         super().__init__()
         samples = load_from_txt(file_name)
-        samples = np.insert(samples, 0, 2, axis=-1).astype(np.int_)
-
-        if train:
-            self.data = samples[samples.shape[0] // 9 :]
-        else:
-            self.data = samples[: samples.shape[0] // 9]
+        self.data = np.insert(samples, 0, 2, axis=-1).astype(np.int_)
 
         self.unique_tgts = np.unique(self.data[:, 1:], axis=0, return_counts=True)
 
