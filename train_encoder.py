@@ -1,16 +1,16 @@
+import argparse
 from time import process_time
+import os
 
-import matplotlib.pyplot as plt
-import numpy as np
 import torch
-from scipy.stats import entropy
 from torch import nn
 from torch.nn.modules.loss import _Loss
 from torch.optim.optimizer import Optimizer
 from torch.utils.data import DataLoader
 
+from encoder import Config, _results_dir
 from models.encoder import SequenceEncoder
-from utils.datasets import MCMEncoderDataset, load_from_txt
+from utils.datasets import MCMEncoderDataset
 from utils.fs import load_checkpoint, save_checkpoint
 
 
@@ -42,35 +42,13 @@ def train_epoch(
     return average_loss
 
 
-def sequence_validation_epoch(
-    model: SequenceEncoder, loss_fn: _Loss, dataloader: DataLoader, device="cuda"
-):
-    model.eval()
-    average_loss = 0
-
-    with torch.no_grad():
-        for src, tgt in dataloader:
-            src, tgt = src.to(device), tgt.to(device)
-
-            logits = model(src)
-
-            # pred shape must be (batch_size, #classes, seq length)
-            logits = logits.permute(0, 2, 1)
-            loss = loss_fn(logits, tgt)
-            average_loss += loss.item() / len(dataloader)
-
-    return average_loss
-
-
 def train(
     model: SequenceEncoder,
     epochs: int,
     optimizer: Optimizer,
     loss_fn: _Loss,
     train_dataloader: DataLoader,
-    validation_dataloader: DataLoader,
     device="cuda",
-    losses: list[float] = [],
 ):
     if epochs < 1:
         raise ValueError("epochs must be a positive integer")
@@ -82,125 +60,88 @@ def train(
         epoch_start_time = process_time()
 
         print("=" * 30, f"starting epoch {current_epoch}", "=" * 30)
-        logs.extend(("=" * 30, f"starting epoch {current_epoch}", "=" * 30, "\n"))
 
         train_loss = train_epoch(model, optimizer, loss_fn, train_dataloader, device)
-        losses.append(train_loss)
+        logs["loss"].append(train_loss)
 
-        validate_loss = sequence_validation_epoch(
-            model, loss_fn, validation_dataloader, device
-        )
         print("training loss: ", train_loss)
-        print("validation loss: ", validate_loss)
         print("epoch time: ", process_time() - epoch_start_time)
-        logs.extend(
-            (
-                f"training loss: {train_loss}\n",
-                f"validation loss: {validate_loss}\n",
-                f"epoch time: {process_time() - epoch_start_time}\n",
-            )
-        )
 
     print("total training time: ", process_time() - start_time, "s")
-    logs.extend((f"total training time: {process_time() - start_time} s\n"))
 
 
 if __name__ == "__main__":
-    logs = []
 
-    learn_rate = 10e-4
-    betas = (0.9, 0.99)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("config", type=str)
 
-    weights_file = "3_3_mcm_1.pth"
+    args = parser.parse_args()
 
-    model = SequenceEncoder(
-        num_tokens=3, d_model=32, num_heads=4, num_layers=6, num_hidden=400
-    ).to("cuda")
-    # model.load_state_dict(torch.load(weights_file, weights_only=True))
+    config = Config(args.config)
+
+    model_id = config.model_id
+    train_id = config.train_id
+
+    num_tokens = config.num_tokens
+    d_model = config.d_model
+    num_heads = config.num_heads
+    num_layers = config.num_layers
+    num_hidden = config.num_hidden
+
+    N_sites = config.N_sites
+    train_data_id = config.train_data_id
+
+    learn_rate = config.learn_rate
+    betas = (config.beta1, config.beta2)
+    epochs = config.epochs
+    batch_size = config.batch_size
+
+    device = "cuda"
+
+    model_file = _results_dir(f"model_{model_id}.params")
+    checkpoint_file = _results_dir(f"model_{model_id}__id_{train_id}.pth")
+
+    train_datafile = f"data/N_sites_{N_sites}/sites_{N_sites}__id_{train_data_id}"
+
+    logs = {"loss": [], "logs": []}
+
+    dataset = MCMEncoderDataset(train_datafile)
+    dataloader = DataLoader(
+        dataset,
+        batch_size=batch_size,
+        shuffle=True,
+        pin_memory=True,
+        pin_memory_device="cuda",
+    )
+
+    if os.path.isfile(model_file):
+        print(f"Model loaded from file {model_file}")
+        model = SequenceEncoder.from_file(model_file).to(device)
+
+    else:
+        model = SequenceEncoder(
+            num_tokens=num_tokens,
+            d_model=d_model,
+            num_heads=num_heads,
+            num_layers=num_layers,
+            num_hidden=num_hidden,
+        ).to("cuda")
 
     opt = torch.optim.Adam(model.parameters(), lr=learn_rate, betas=betas)
     loss_fn = nn.CrossEntropyLoss()
 
-    model, opt, current_epoch, loss = load_checkpoint(model, opt, "encoder.pth")
-    data_file = "data/N_sites_6/sites_3_3__id_1__map_id_5"
-
-    dataset = MCMEncoderDataset(data_file)
-    dataloader = DataLoader(dataset, batch_size=500, shuffle=True)
-
-    validation_dataset = MCMEncoderDataset(data_file, train=False)
-    val_dataloader = DataLoader(validation_dataset, batch_size=64, shuffle=True)
+    model, opt, current_epoch, logs = load_checkpoint(checkpoint_file, model, opt)
 
     try:
         train(
             model,
-            15,
+            epochs,
             opt,
             loss_fn,
             dataloader,
-            val_dataloader,
-            losses=loss,
         )
     except KeyboardInterrupt:
         print("KeyboardInterrupt recieved")
+        current_epoch -1
 
-    torch.save(model.state_dict(), 'encoder.pth')
-    save_checkpoint(model, opt, loss, current_epoch, 'encoder.pth')
-
-    model.eval()
-
-    def generate(num_sequences, seq_length, model=model):
-        src = torch.full((num_sequences, 1), 2, device="cuda")
-        for i in range(seq_length):
-            logits = model(src)
-            probs = torch.softmax(logits[:, -1], -1).cumsum(-1)
-
-            throw = torch.rand(num_sequences, 1).to("cuda")
-            idx = torch.searchsorted(probs, throw)
-
-            src = torch.cat((src, idx), dim=-1)
-
-        return src[:, 1:]
-
-    seq_length = 6
-
-    num_sequences = 500
-    batches = 20
-
-    total_sequences = num_sequences * batches
-    out = np.ndarray((total_sequences, seq_length))
-
-    for i in range(batches):
-        print("gen", i, end="\r")
-        out[i * num_sequences : (i + 1) * num_sequences] = generate(
-            num_sequences, seq_length
-        ).cpu()
-
-    configs_unique, configs_counts = np.unique(
-        load_from_txt(data_file), axis=0, return_counts=True
-    )
-    in_dist = configs_counts / configs_counts.sum()
-    in_dist[in_dist == 0] = 10e-10
-
-    out_mask = np.any(np.all(out[..., None, :] == configs_unique, axis=-1), axis=-1)
-
-    out_unique, _ = np.unique(out[out_mask], axis=0, return_counts=True)
-    out_counts = np.sum(np.all(out[..., None, :] == configs_unique, axis=-1), axis=0)
-    out_dist = out_counts / out_counts.sum()
-    out_dist[out_dist == 0] = 10e-10
-
-    plt.plot(in_dist, label="in")
-    plt.plot(out_dist, label="generated")
-    plt.title(
-        f"error frac: {np.sum(~out_mask) / total_sequences}, {entropy(in_dist, out_dist)}"
-    )
-    plt.legend()
-    plt.show()
-
-    # for i, data in enumerate(dataloader):
-    #     if i == 3:
-    #         break
-    #     src, tgt = data
-    #     src, tgt = src.to("cuda"), tgt.to("cuda")
-    #     print(src)
-    #     print(model(src))
-    #     print(tgt)
+    save_checkpoint(model, opt, logs, current_epoch, checkpoint_file)
