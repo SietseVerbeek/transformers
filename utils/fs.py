@@ -14,7 +14,11 @@ def results_dir(filename: str) -> str:
 
 
 def save_checkpoint(
-    model: nn.Module, optimizer: Optimizer, logs: dict[str, list], epoch: int, filename: str
+    model: nn.Module,
+    optimizer: Optimizer,
+    logs: dict[str, list],
+    epoch: int,
+    filename: str,
 ) -> None:
     state = {
         "epoch": epoch,
@@ -27,23 +31,20 @@ def save_checkpoint(
 
 # https://discuss.pytorch.org/t/loading-a-saved-model-for-continue-training/17244/3
 def load_checkpoint(
-    model: nn.Module, optimizer: Optimizer | None, filename: str
+    filename: str, model: nn.Module | None = None, optimizer: Optimizer | None = None
 ) -> Tuple[nn.Module, Optimizer, int, dict[str, list]]:
-
     start_epoch = 0
-    logs = {
-        "loss": [],
-        "logs": []
-    }
+    logs = {"loss": [], "logs": []}
 
     if os.path.isfile(filename):
-
         print("=> loading checkpoint '{}'".format(filename))
         checkpoint = torch.load(filename, weights_only=True)
 
         start_epoch = checkpoint["epoch"] + 1
-        model.load_state_dict(checkpoint["state_dict"])
         logs = checkpoint["logs"]
+
+        if model:
+            model.load_state_dict(checkpoint["state_dict"])
 
         if optimizer:
             optimizer.load_state_dict(checkpoint["optimizer"])
