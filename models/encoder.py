@@ -1,3 +1,5 @@
+from typing import Self
+import json
 import math
 
 import torch
@@ -16,7 +18,7 @@ class SequenceEncoder(nn.Transformer):
         num_heads: int,
         num_layers: int,
         num_hidden: int,
-        dropout=0.5
+        dropout=0.5,
     ):
         super().__init__(
             d_model=d_model,
@@ -25,13 +27,21 @@ class SequenceEncoder(nn.Transformer):
             num_encoder_layers=num_layers,
             batch_first=True,
         )
+
+        self.num_tokens = num_tokens
+        self.d_model = d_model
+        self.num_heads = num_heads
+        self.num_layers = num_layers
+        self.num_hidden = num_hidden
+        self.dropout = dropout
+
         self.model_type = "Transformer"
         self.src_mask = None
-        self.pos_encoder = PositionalEncoding(d_model, dropout)
+        self.pos_encoder = PositionalEncoding(self.d_model, self.dropout)
 
-        self.input_emb = nn.Embedding(num_tokens, d_model)
-        self.ninp = d_model
-        self.decoder = nn.Linear(d_model, num_tokens)
+        self.input_emb = nn.Embedding(self.num_tokens, self.d_model)
+        self.ninp = self.d_model
+        self.decoder = nn.Linear(self.d_model, self.num_tokens)
 
         self.init_weights()
 
@@ -58,8 +68,49 @@ class SequenceEncoder(nn.Transformer):
         src = self.pos_encoder(src)
         output = self.encoder(src, mask=self.src_mask)
         output = self.decoder(output)
+        return output
         return F.log_softmax(output, dim=-1)
 
+    def to_file(self, filename: str) -> None:
+        params = {
+            "num_tokens": self.num_tokens,
+            "d_model": self.d_model,
+            "num_heads": self.num_heads,
+            "num_layers": self.num_layers,
+            "num_hidden": self.num_hidden,
+            "dropout": self.dropout,
+        }
+
+        with open(filename, "w+") as file:
+            json.dump(params, file)
+
+    @classmethod
+    def from_file(cls, filename: str) -> Self:
+        """
+        Loads model parameters from file, use on files created with to_file method.
+
+        Filename is relative
+        """
+
+
+        with open(filename, "r") as file:
+            params = json.load(file)
+
+            num_tokens = params["num_tokens"]
+            d_model = params["d_model"]
+            num_heads = params["num_heads"]
+            num_layers = params["num_layers"]
+            num_hidden = params["num_hidden"]
+            dropout = params["dropout"]
+
+        return cls(
+            num_tokens = num_tokens,
+            d_model = d_model,
+            num_heads = num_heads,
+            num_layers = num_layers,
+            num_hidden = num_hidden,
+            dropout = dropout,
+        )
 
 if __name__ == "__main__":
     model = SequenceEncoder(5, 16, 4, 200, 2)

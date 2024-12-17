@@ -1,6 +1,7 @@
 import math
 from typing import Optional, Self
 
+import json
 import torch
 import torch.nn as nn
 from torch import Tensor
@@ -88,7 +89,8 @@ class Transformer(nn.Module):
             "dropout": self.dropout,
         }
 
-        torch.save(params, filename)
+        with open(filename, "w+") as file:
+            json.dump(params, file)
 
     @classmethod
     def from_file(cls, filename: str) -> Self:
@@ -99,7 +101,8 @@ class Transformer(nn.Module):
         """
 
 
-        params = torch.load(filename, weights_only=True)
+        with open(filename, "r") as file:
+            params = json.load(file)
 
         num_tokens = params["num_token"]
         d_model = params["d_model"]
