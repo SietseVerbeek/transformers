@@ -75,7 +75,6 @@ if __name__ == "__main__":
             # Concatenate previous input with predicted best word
             out = torch.cat((out, idx), dim=-1)
 
-        print(out[:20])
         correct_maps = torch.all(out == tgt, dim=-1)
         frac_correct_maps += correct_maps.sum() / correct_maps.size(0)
         correct_sites = out == tgt
@@ -83,6 +82,8 @@ if __name__ == "__main__":
 
     sites_correct = frac_correct / (i + 1)
     maps_correct = frac_correct_maps / (i + 1)
+
+    print("sites correct" , sites_correct)
 
     plt.plot(logs["loss"])
     plt.title(f"sites {sites_correct:.3f}, maps {maps_correct:.3f}")
