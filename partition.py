@@ -29,8 +29,7 @@ class Config:
         data = config["data"]
         self.N_sites = data["N_sites"]
         self.train_data_id = data["train_data_id"]
-        self.val_data_id = data["val_data_id"]
-        self.test_data_id = data["val_data_id"]
+        self.test_data_id = data["test_data_id"]
 
         training = config["training"]
         self.learn_rate = training["learn_rate"]
