@@ -227,6 +227,10 @@ class PartitionDataset(Dataset):
             self.data = self.data[: self.data.shape[0] // 10]
             self.map_ids = self.map_ids[: self.map_ids.shape[0] // 10]
 
+        else:
+            self.data = self.data[self.data.shape[0] // 10:]
+            self.map_ids = self.map_ids[self.map_ids.shape[0] // 10:]
+
     def __getitem__(self, index):
         return self.data[index], self.mappings[self.map_ids[index]]
 
