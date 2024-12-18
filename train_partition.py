@@ -122,6 +122,7 @@ def train(
         validate_loss = sequence_validation_epoch(
             model, loss_fn, validation_dataloader, device
         )
+        logs["val_loss"].append(validate_loss)
         print("training loss: ", train_loss)
         print("validation loss: ", validate_loss)
         print("epoch time: ", process_time() - epoch_start_time)
@@ -167,7 +168,7 @@ if __name__ == "__main__":
 
     train_datafile = _data_dir(f"N_{N_sites}_id_{train_data_id}.npz")
 
-    logs = {"loss": [], "logs": []}
+    logs = {"loss": [], "val_loss":[], "logs": []}
 
     dataset = PartitionDataset(train_datafile)
     dataloader = DataLoader(

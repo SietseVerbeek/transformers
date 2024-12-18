@@ -85,6 +85,8 @@ if __name__ == "__main__":
 
     print("sites correct" , sites_correct)
 
-    plt.plot(logs["loss"])
+    plt.plot(logs["loss"], label="loss")
+    plt.plot(logs["val_loss"], label="validation loss")
     plt.title(f"sites {sites_correct:.3f}, maps {maps_correct:.3f}")
+    plt.legend()
     plt.savefig(_results_dir(f"model_{model_id}__id_{train_id}.jpg"))

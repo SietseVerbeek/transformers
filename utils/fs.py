@@ -34,7 +34,7 @@ def load_checkpoint(
     filename: str, model: nn.Module | None = None, optimizer: Optimizer | None = None
 ) -> Tuple[nn.Module, Optimizer, int, dict[str, list]]:
     start_epoch = 0
-    logs = {"loss": [], "logs": []}
+    logs = {"loss": [], "val_loss": [], "logs": []}
 
     if os.path.isfile(filename):
         print("=> loading checkpoint '{}'".format(filename))
