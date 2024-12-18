@@ -1,7 +1,6 @@
+import argparse
 import os
-from os.path import isfile
 from time import process_time
-from typing import Dict
 
 import torch
 from torch import nn
@@ -10,15 +9,10 @@ from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
 from models.transformer import Transformer
+from partition import Config, _results_dir
 from utils.datasets import PartitionDataset
 from utils.fs import load_checkpoint, save_checkpoint
-from utils.fs import results_dir as main_results_dir
-from utils.masking import create_mask, generate_square_subsequent_mask
-
-
-def _results_dir(filename: str):
-    str_ = f"partition/{filename}"
-    return main_results_dir(str_)
+from utils.masking import create_mask
 
 
 def _data_dir(filename: str):
@@ -138,28 +132,36 @@ def train(
 
 
 if __name__ == "__main__":
-    device = "cuda"
 
-    model_id = 1
-    train_id = 0
+    parser = argparse.ArgumentParser()
+    parser.add_argument("config", type=str)
+
+    args = parser.parse_args()
+
+    config = Config(args.config)
+
+    model_id = config.model_id
+    train_id = config.train_id
 
     # params are only used when there is no model file with model_id
-    num_tokens = 8
-    d_model = 16
-    padding_idx = 4
-    num_heads = 4
-    num_encoder_layers = 2
-    num_decoder_layers = 1
-    dropout = 0.1
+    num_tokens = config.num_tokens
+    d_model = config.d_model
+    padding_idx = config.padding_idx
+    num_heads = config.num_heads
+    num_encoder_layers = config.num_encoder_layers
+    num_decoder_layers = config.num_decoder_layers
+    dropout = config.dropout
 
-    N_sites = 5
-    train_data_id = 0
-    val_data_id = 1
+    N_sites = config.N_sites
+    train_data_id = config.train_data_id
+    val_data_id = config.val_data_id
 
-    learn_rate = 10e-4
-    betas = (0.9, 0.99)
-    epochs = 15
-    batch_size = 200
+    learn_rate = config.learn_rate
+    betas = config.betas
+    epochs = config.epochs
+    batch_size = config.batch_size
+
+    device = "cuda"
 
     model_file = _results_dir(f"model_{model_id}.params")
     checkpoint_file = _results_dir(f"model_{model_id}__id_{train_id}.pth")
@@ -202,7 +204,7 @@ if __name__ == "__main__":
     opt = torch.optim.Adam(model.parameters(), lr=learn_rate, betas=betas)
     loss_fn = nn.CrossEntropyLoss(ignore_index=4)
 
-    model, opt, current_epoch, logs = load_checkpoint(model, opt, checkpoint_file)
+    model, opt, current_epoch, logs = load_checkpoint(checkpoint_file, model, opt)
 
     try:
         train(

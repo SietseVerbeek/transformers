@@ -1,24 +1,35 @@
+import argparse
 import os
 
+import matplotlib.pyplot as plt
 import torch
 from torch.utils.data import DataLoader
 
 from models.transformer import Transformer
+from partition import Config
 from train_partition import _data_dir, _results_dir
 from utils.datasets import PartitionDataset
 from utils.fs import load_checkpoint
 from utils.masking import generate_square_subsequent_mask
 
 if __name__ == "__main__":
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("config", type=str)
+
+    args = parser.parse_args()
+
+    config = Config(args.config)
+
+    N_sites = config.N_sites
+
+    model_id = config.model_id
+    train_id = config.train_id
+    test_data_id = config.test_data_id
+
+    batch_size = config.batch_size
+
     device = "cuda"
-
-    N_sites = 5
-
-    model_id = 1
-    train_id = 0
-    test_data_id = 3
-
-    batch_size = 300
 
     model_file = _results_dir(f"model_{model_id}.params")
     checkpoint_file = _results_dir(f"model_{model_id}__id_{train_id}.pth")
@@ -28,7 +39,7 @@ if __name__ == "__main__":
     else:
         raise FileNotFoundError(f"model file with id {model_file} not found")
 
-    model, _, _, _ = load_checkpoint(model, None, checkpoint_file)
+    model, _, _, logs = load_checkpoint(checkpoint_file, model, None)
 
     model.eval()
 
@@ -64,10 +75,15 @@ if __name__ == "__main__":
             # Concatenate previous input with predicted best word
             out = torch.cat((out, idx), dim=-1)
 
+        print(out[:20])
         correct_maps = torch.all(out == tgt, dim=-1)
         frac_correct_maps += correct_maps.sum() / correct_maps.size(0)
         correct_sites = out == tgt
         frac_correct += correct_sites.sum() / correct_sites.nelement()
 
-    print(frac_correct / (i + 1))
-    print(frac_correct_maps / (i + 1))
+    sites_correct = frac_correct / (i + 1)
+    maps_correct = frac_correct_maps / (i + 1)
+
+    plt.plot(logs["loss"])
+    plt.title(f"sites {sites_correct:.3f}, maps {maps_correct:.3f}")
+    plt.savefig(_results_dir(f"model_{model_id}__id_{train_id}.jpg"))
