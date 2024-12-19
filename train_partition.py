@@ -155,6 +155,7 @@ if __name__ == "__main__":
 
     N_sites = config.N_sites
     train_data_id = config.train_data_id
+    val_data_id = config.val_data_id
 
     learn_rate = config.learn_rate
     betas = config.betas
@@ -167,6 +168,7 @@ if __name__ == "__main__":
     checkpoint_file = _results_dir(f"model_{model_id}__id_{train_id}.pth")
 
     train_datafile = _data_dir(f"N_{N_sites}_id_{train_data_id}.npz")
+    val_datafile = _data_dir(f"N_{N_sites}_id_{val_data_id}.npz")
 
     logs = {"loss": [], "val_loss":[], "logs": []}
 
@@ -179,7 +181,7 @@ if __name__ == "__main__":
         pin_memory_device="cuda",
     )
 
-    val_dataset = PartitionDataset(train_datafile, validation=True)
+    val_dataset = PartitionDataset(val_datafile)
     val_dataloader = DataLoader(val_dataset, batch_size=batch_size, shuffle=True)
 
     if os.path.isfile(model_file):
