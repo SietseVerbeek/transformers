@@ -12,6 +12,30 @@ def get_mcm_partition_batch(
     groupings: npt.NDArray[np.int_],
     model_dists: Dict[int, Dirichlet],
 ):
+    """
+        Generates a single batch of MCM data for training a "partitioning
+        model", a model which outputs the most likely variable grouping
+        from a set of configurations. Groupings must have 2 groups and must
+        have a single group boundary, "0, 1, 0, 1" is invalid
+
+        Arguments:
+            batch_size - number of different grouping-set pairs to generate
+            set_size - number of configurations in a set
+            groupings - group labels for the variables, either 0 or 1
+            model_dists - prob. distributions for mcm models
+
+        groupings example: 
+            [
+                [0, 0, 0],
+                [0, 0, 1],
+                [0, 1 ,1]
+            ]
+
+        Output:
+            src - torch tensor with sets, (batch_size, set_size * [length of grouping])
+            tgt - torch tensor with correct groupings for src, (batch_size, [length of grouping])
+    """
+
     N_sites = groupings.shape[-1]
     configs_per_map = batch_size // groupings.shape[0]
     batch_size = configs_per_map * groupings.shape[0]
