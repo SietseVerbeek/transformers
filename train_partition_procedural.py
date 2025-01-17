@@ -13,7 +13,7 @@ from torch.optim import Optimizer
 
 from models.transformer import Transformer
 from partition import Config, _results_dir
-from utils.data import get_partition_batch
+from utils.data import get_mcm_partition_batch
 from utils.fs import load_checkpoint, save_checkpoint
 from utils.masking import create_mask
 
@@ -37,7 +37,7 @@ def sequence_train_epoch(
     average_loss = 0
 
     for i in range(num_batches):
-        src, tgt = get_partition_batch(batch_size, set_size, groupings, model_dists)
+        src, tgt = get_mcm_partition_batch(batch_size, set_size, groupings, model_dists)
         src, tgt = src.to(device), tgt.to(device)
 
         tgt_input = tgt[:, :-1]

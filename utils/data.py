@@ -6,7 +6,7 @@ import numpy.typing as npt
 import numpy as np
 
 
-def get_partition_batch(
+def get_mcm_partition_batch(
     batch_size: int,
     set_size: int,
     groupings: npt.NDArray[np.int_],
@@ -65,5 +65,5 @@ if __name__ == "__main__":
         dists.update([(N, Dirichlet(torch.full((2 ** N, ), .5)))])
 
     start = perf_counter()
-    get_partition_batch(300, 20, groupings, dists)
+    get_mcm_partition_batch(300, 20, groupings, dists)
     print(perf_counter() - start)
