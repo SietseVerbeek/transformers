@@ -57,7 +57,7 @@ if __name__ == "__main__":
 
     for i in range(20):
 
-        src, tgt = get_simple_partition_batch(300, 20, groupings)
+        src, tgt = get_simple_partition_batch(300, 20, groupings, device=device)
         out = torch.full((src.size(0), 1), 0, dtype=torch.int64, device=device)
 
         for _ in range(N_sites - 1):

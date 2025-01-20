@@ -72,6 +72,7 @@ def get_simple_partition_batch(
     batch_size: int,
     set_size: int,
     groupings: npt.NDArray[np.int_],
+    device="cuda"
 ):
     """
         Generate a single batch of training data for a partitioning model.
@@ -89,19 +90,18 @@ def get_simple_partition_batch(
 
     icc_sizes = np.apply_along_axis(np.bincount, axis=1, arr=groupings)
 
-    tgt = torch.tensor(np.repeat(groupings, configs_per_map, axis=0), dtype=torch.long)
-    src = torch.empty((batch_size, N_sites * set_size), dtype=torch.long)
+    tgt = torch.tensor(np.repeat(groupings, configs_per_map, axis=0), dtype=torch.long, device=device)
+    src = torch.empty((batch_size, N_sites * set_size), dtype=torch.long, device=device)
 
     for idx in range(groupings.shape[0]):
 
         left_icc = icc_sizes[idx, 0]
-        right_icc = icc_sizes[idx, 1]
 
-        choices = torch.zeros((4, N_sites))
+        choices = torch.zeros((4, N_sites), device=device)
         choices[2:, :left_icc] = 1
         choices[1::2, left_icc:] = 1
 
-        indexes = torch.randint(0, 4, size=(configs_per_map, set_size))
+        indexes = torch.randint(0, 4, size=(configs_per_map, set_size), device=device)
 
         src[idx * configs_per_map: (idx + 1) * configs_per_map] = choices[indexes].reshape(configs_per_map, -1)
 
