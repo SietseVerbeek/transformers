@@ -68,6 +68,45 @@ def get_mcm_partition_batch(
 
     return src, tgt
 
+def get_simple_partition_batch(
+    batch_size: int,
+    set_size: int,
+    groupings: npt.NDArray[np.int_],
+):
+    """
+        Generate a single batch of training data for a partitioning model.
+        All members of a grouping will get the same value. 
+
+        Arguments:
+            batch_size - amount of set-grouping pairs to be generated
+            set_size - amount of configurations in a set
+            groupings - sets of group labels for the variables, either 0 or 1
+    """
+
+    N_sites = groupings.shape[-1]
+    configs_per_map = batch_size // groupings.shape[0]
+    batch_size = configs_per_map * groupings.shape[0]
+
+    icc_sizes = np.apply_along_axis(np.bincount, axis=1, arr=groupings)
+
+    tgt = torch.tensor(np.repeat(groupings, configs_per_map, axis=0), dtype=torch.long)
+    src = torch.empty((batch_size, N_sites * set_size), dtype=torch.long)
+
+    for idx in range(groupings.shape[0]):
+
+        left_icc = icc_sizes[idx, 0]
+        right_icc = icc_sizes[idx, 1]
+
+        choices = torch.zeros((4, N_sites))
+        choices[2:, :left_icc] = 1
+        choices[1::2, left_icc:] = 1
+
+        indexes = torch.randint(0, 4, size=(configs_per_map, set_size))
+
+        src[idx * configs_per_map: (idx + 1) * configs_per_map] = choices[indexes].reshape(configs_per_map, -1)
+
+    return src, tgt
+
 if __name__ == "__main__":
     from time import perf_counter
     def map_one_border(N_sites, border_idx):
@@ -91,3 +130,4 @@ if __name__ == "__main__":
     start = perf_counter()
     get_mcm_partition_batch(300, 20, groupings, dists)
     print(perf_counter() - start)
+    get_simple_partition_batch(10, 4, groupings)
