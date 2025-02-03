@@ -105,7 +105,9 @@ def get_simple_partition_batch(
 
         src[idx * configs_per_map: (idx + 1) * configs_per_map] = choices[indexes].reshape(configs_per_map, -1)
 
-    return src, tgt
+    permutation = torch.randperm(src.size()[0])
+
+    return src[permutation], tgt[permutation]
 
 if __name__ == "__main__":
     from time import perf_counter
