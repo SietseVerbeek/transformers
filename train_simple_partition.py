@@ -80,6 +80,7 @@ def train(
         epoch_start_time = process_time()
 
         print("=" * 30, f"starting epoch {current_epoch}", "=" * 30)
+        logs["logs"].append("=" * 30 + f"starting epoch {current_epoch}" + "=" * 30)
 
         train_loss = sequence_train_epoch(
             model,
@@ -94,11 +95,14 @@ def train(
         logs["loss"].append(train_loss)
 
         print("training loss: ", train_loss)
+        logs["logs"].append(f"training loss:  {train_loss}")
         print("epoch time: ", process_time() - epoch_start_time)
+        logs["logs"].append(f"epoch time: {process_time() - epoch_start_time}")
 
         save_checkpoint(model, optimizer, logs, current_epoch, "crash_checkpoint.pth")
 
-    print("total training time: ", process_time() - start_time, "s")
+    print(f"total training time: {process_time() - start_time}s")
+    logs["logs"].append(f"total training time: {process_time() - start_time}s")
 
 
 if __name__ == "__main__":

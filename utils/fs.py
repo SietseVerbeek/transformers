@@ -27,6 +27,8 @@ def save_checkpoint(
         "logs": logs,
     }
     torch.save(state, filename)
+    with open(filename + ".logs", "a") as file:
+        file.write('\n'.join(logs["logs"]))
 
 
 # https://discuss.pytorch.org/t/loading-a-saved-model-for-continue-training/17244/3
@@ -36,24 +38,30 @@ def load_checkpoint(
     start_epoch = 0
     logs = {"loss": [], "val_loss": [], "logs": []}
 
-    if os.path.isfile(filename):
-        print("=> loading checkpoint '{}'".format(filename))
-        checkpoint = torch.load(filename, weights_only=True)
+    with open(filename + ".logs", "a") as file:
+        if os.path.isfile(filename):
+            print("=> loading checkpoint '{}'".format(filename))
+            file.write("=> loading checkpoint '{}'".format(filename))
+            checkpoint = torch.load(filename, weights_only=True)
 
-        start_epoch = checkpoint["epoch"] + 1
-        logs = checkpoint["logs"]
+            start_epoch = checkpoint["epoch"] + 1
+            logs = checkpoint["logs"]
 
-        if model:
-            model.load_state_dict(checkpoint["state_dict"])
+            if model:
+                model.load_state_dict(checkpoint["state_dict"])
 
-        if optimizer:
-            optimizer.load_state_dict(checkpoint["optimizer"])
+            if optimizer:
+                optimizer.load_state_dict(checkpoint["optimizer"])
 
-        print(
-            "=> loaded checkpoint '{}' (epoch {})".format(filename, checkpoint["epoch"])
-        )
+            print(
+                "=> loaded checkpoint '{}' (epoch {})".format(filename, checkpoint["epoch"])
+            )
+            file.write(
+                "=> loaded checkpoint '{}' (epoch {})\n".format(filename, checkpoint["epoch"])
+            )
 
-    else:
-        print("=> no checkpoint found at '{}'".format(filename))
+        else:
+            print("=> no checkpoint found at '{}'".format(filename))
+            file.write("=> no checkpoint found at '{}'\n".format(filename))
 
     return model, optimizer, start_epoch, logs
