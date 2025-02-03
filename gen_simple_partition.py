@@ -77,7 +77,9 @@ if __name__ == "__main__":
 
             # Concatenate previous input with predicted best word
             out = torch.cat((out, idx), dim=-1)
-
+                
+        print("out", out.unique(return_counts=True))
+        print("tgt", tgt.unique(return_counts=True))
         correct_maps = torch.all(out == tgt, dim=-1)
         frac_correct_maps += correct_maps.sum() / correct_maps.size(0)
         correct_sites = out == tgt
