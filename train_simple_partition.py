@@ -178,4 +178,5 @@ if __name__ == "__main__":
         current_epoch -= 1
 
     os.remove("crash_checkpoint.pth")
+    os.remove("crash_checkpoint.pth.logs")
     save_checkpoint(model, opt, logs, current_epoch, checkpoint_file)
