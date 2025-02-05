@@ -168,7 +168,7 @@ if __name__ == "__main__":
         map[1, border_idx:] = 1
         return map
 
-    mappings = np.array([map_one_border(N_sites, i) for i in range(1, N_sites)])
+    mappings = np.array([map_one_border(N_sites, i) for i in range(0, N_sites + 1)])
     groupings = np.argmax(mappings, axis=1)
 
     try:
