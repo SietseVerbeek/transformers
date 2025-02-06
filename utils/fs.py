@@ -41,7 +41,7 @@ def load_checkpoint(
     with open(filename + ".logs", "a") as file:
         if os.path.isfile(filename):
             print("=> loading checkpoint '{}'".format(filename))
-            file.write("=> loading checkpoint '{}'".format(filename))
+            file.write("=> loading checkpoint '{}'\n".format(filename))
             checkpoint = torch.load(filename, weights_only=True)
 
             start_epoch = checkpoint["epoch"] + 1

@@ -102,7 +102,7 @@ def train(
         save_checkpoint(model, optimizer, logs, current_epoch, "crash_checkpoint.pth")
 
     print(f"total training time: {process_time() - start_time}s")
-    logs["logs"].append(f"total training time: {process_time() - start_time}s")
+    logs["logs"].append(f"total training time: {process_time() - start_time}s\n")
 
 
 if __name__ == "__main__":
