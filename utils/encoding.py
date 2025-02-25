@@ -33,7 +33,6 @@ class PositionalEncoding(nn.Module):
 
         pe[:, 0::2] = torch.sin(position * div_term)
         pe[:, 1::2] = torch.cos(position * div_term)
-        pe = pe.unsqueeze(0)
 
         self.register_buffer("pe", pe)
 
@@ -48,5 +47,10 @@ class PositionalEncoding(nn.Module):
             >>> output = pos_encoder(x)
         """
 
-        x = x + self.pe[:, : x.size(1), :]
+        if x.dim() == 3:
+            x = x + self.pe[..., :x.size(-2), :]
+        else:
+            x = x + self.pe[:x.size(-2), :]
+
+
         return self.dropout(x)
