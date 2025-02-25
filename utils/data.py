@@ -108,6 +108,49 @@ def get_simple_partition_batch(
     permutation = torch.randperm(src.size()[0])
 
     return src[permutation], tgt[permutation]
+    
+
+def get_set_partition_batch(
+    batch_size: int,
+    set_size: int,
+    groupings: npt.NDArray[np.int_],
+    device="cuda"
+):
+    """
+        Generate a single batch of training data for a partitioning model.
+        All members of a grouping will get the same value. 
+
+        Arguments:
+            batch_size - amount of set-grouping pairs to be generated
+            set_size - amount of configurations in a set
+            groupings - sets of group labels for the variables, either 0 or 1
+    """
+
+    N_sites = groupings.shape[-1]
+    configs_per_map = batch_size // groupings.shape[0]
+    batch_size = configs_per_map * groupings.shape[0]
+
+    icc_sizes = np.apply_along_axis(np.bincount, axis=1, arr=groupings)
+
+    tgt = torch.tensor(np.repeat(groupings, configs_per_map, axis=0), dtype=torch.long, device=device)
+    src = torch.empty((batch_size, set_size, N_sites), dtype=torch.long, device=device)
+
+    for idx in range(groupings.shape[0]):
+
+        left_icc = icc_sizes[idx, 0]
+
+        choices = torch.zeros((4, N_sites), device=device)
+        choices[2:, :left_icc] = 1
+        choices[1::2, left_icc:] = 1
+
+        indexes = torch.randint(0, 4, size=(configs_per_map, set_size), device=device)
+
+        src[idx * configs_per_map: (idx + 1) * configs_per_map] = choices[indexes]
+
+    permutation = torch.randperm(src.size()[0])
+
+    return src[permutation], tgt[permutation]
+
 
 if __name__ == "__main__":
     from time import perf_counter
@@ -130,6 +173,7 @@ if __name__ == "__main__":
         dists.update([(N, Dirichlet(torch.full((2 ** N, ), .5)))])
 
     start = perf_counter()
-    get_mcm_partition_batch(300, 20, groupings, dists)
-    print(perf_counter() - start)
-    get_simple_partition_batch(10, 4, groupings)
+    # get_mcm_partition_batch(300, 20, groupings, dists)
+    # print(perf_counter() - start)
+    # get_simple_partition_batch(10, 4, groupings)
+    get_set_partition_batch(10, 6, groupings)
