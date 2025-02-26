@@ -1,0 +1,21 @@
+info:
+  model_id: 0
+  train_id: 0
+
+# params are only used when there is no model file with model_id
+model:
+  embed_dim: 16
+  enc_layers: 2
+  enc_heads: 2
+  pma_heads: 2
+  dec_heads: 2
+  queries: 2
+
+training:
+  N_sites: 8
+  set_size: 10
+  batch_size: 200
+  learn_rate: 0.001
+  beta1: 0.9
+  beta2: 0.99
+  epochs: 10

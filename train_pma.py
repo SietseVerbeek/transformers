@@ -9,10 +9,10 @@ from torch import nn
 from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 
-from models.SetTransformer import PMA_GroupingModel
+from models.PMATransformer import PMA_GroupingModel
 from models.transformer import Transformer
-from partition import Config, _results_dir
-from utils.data import get_set_partition_batch, get_simple_partition_batch
+from pma import Config, _results_dir
+from utils.data import get_set_partition_batch
 from utils.fs import load_checkpoint, save_checkpoint
 from utils.masking import create_mask
 
@@ -72,13 +72,13 @@ def train(
     device="cuda",
 ):
     start_time = process_time()
-    # global current_epoch, logs
+    global current_epoch, logs
 
-    for current_epoch in range(epochs):
+    for current_epoch in range(current_epoch, current_epoch + epochs):
         epoch_start_time = process_time()
 
         print("=" * 30, f"starting epoch {current_epoch}", "=" * 30)
-        # logs["logs"].append("=" * 30 + f"starting epoch {current_epoch}" + "=" * 30)
+        logs["logs"].append("=" * 30 + f"starting epoch {current_epoch}" + "=" * 30)
 
         train_loss = sequence_train_epoch(
             model,
@@ -90,71 +90,57 @@ def train(
             groupings,
             device=device
         )
-        # logs["loss"].append(train_loss)
+        logs["loss"].append(train_loss)
 
         print("training loss: ", train_loss)
-        # logs["logs"].append(f"training loss:  {train_loss}")
+        logs["logs"].append(f"training loss:  {train_loss}")
         print("epoch time: ", process_time() - epoch_start_time)
-        # logs["logs"].append(f"epoch time: {process_time() - epoch_start_time}")
+        logs["logs"].append(f"epoch time: {process_time() - epoch_start_time}")
 
-        # save_checkpoint(model, optimizer, logs, current_epoch, "crash_checkpoint.pth")
+        save_checkpoint(model, optimizer, logs, current_epoch, "crash_checkpoint.pth")
 
     print(f"total training time: {process_time() - start_time}s")
-    # logs["logs"].append(f"total training time: {process_time() - start_time}s\n")
+    logs["logs"].append(f"total training time: {process_time() - start_time}s\n")
 
-def gen(
-    model,
-    groupings,
-    set_size,
-    device='cuda'
-):
-
-    batch_size = 100
-    src, tgt = get_set_partition_batch(batch_size, set_size, groupings)
-
-    # get_set_partition does not give the exact batch_size requested,
-    # it changes the batch size to give a uniform dist
-    batch_size = src.shape[0]
-
-    output = torch.zeros((batch_size, 1), dtype=torch.int64, device=device)
-
-    for i in range(N_sites -1):
-
-        src_mask, tgt_mask, src_padding_mask, tgt_padding_mask = create_mask(
-            src, output, pad_idx=4, device=device
-        )
-
-        logits = model(
-            src,
-            output,
-            tgt_mask=tgt_mask,
-        )
-
-        idx = logits[:, -1].argmax(dim=-1).view(-1, 1)
-        output = torch.cat((output, idx), dim=-1)
-        # print(output)
-
-    print((output == tgt).count_nonzero() / output.nelement())
-    # print(tgt)
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("config", type=str)
+
+    args = parser.parse_args()
+
+    c = Config(args.config)
+
+    batch_size = 200
 
     device = "cuda"
 
-    N_sites = 5
-    learn_rate = 0.001
-    betas = (0.9, 0.99)
-    epochs = 5
-    batch_size = 200
+    model_file = _results_dir(f"model_{c.model_id}.params")
+    checkpoint_file = _results_dir(f"model_{c.model_id}__id_{c.train_id}.pth")
 
-    model = PMA_GroupingModel(
+    logs = {"loss": [], "val_loss": [], "logs": []}
 
-    ).to(device)
+    if os.path.isfile(model_file):
+        print(f"Model loaded from file {model_file}")
+        model = PMA_GroupingModel.from_file(model_file).to(device)
 
-    model.load_state_dict(torch.load('settransformer.pth', weights_only=True))
+    else:
+        print(f"Creating new model file at {model_file}")
+        model = PMA_GroupingModel(
+            embed_dim=c.embed_dim,
+            enc_layers=c.enc_layers,
+            enc_heads=c.enc_heads,
+            pma_heads=c.pma_heads,
+            dec_heads=c.dec_heads,
+            queries=c.queries,
+        ).to(device)
 
-    opt = torch.optim.Adam(model.parameters(), lr=learn_rate, betas=betas)
+        model.to_file(model_file)
+
+    opt = torch.optim.Adam(model.parameters(), lr=c.learn_rate, betas=c.betas)
     loss_fn = nn.CrossEntropyLoss(ignore_index=4)
+
+    model, opt, current_epoch, logs = load_checkpoint(checkpoint_file, model, opt)
 
     def map_one_border(N_sites, border_idx):
         map = np.zeros((2, N_sites)).astype("bool")
@@ -162,14 +148,14 @@ if __name__ == "__main__":
         map[1, border_idx:] = 1
         return map
 
-    mappings = np.array([map_one_border(N_sites, i) for i in range(1, N_sites + 1)])
+    mappings = np.array([map_one_border(c.N_sites, i) for i in range(1, c.N_sites + 1)])
     groupings = np.argmax(mappings, axis=1)
 
     try:
-        train(model, epochs, opt, loss_fn, groupings, 330, 10)
+        train(model, c.epochs, opt, loss_fn, groupings, 330, c.set_size)
     except KeyboardInterrupt:
         print("KeyboardInterrupt recieved")
 
-    torch.save(model.state_dict(), 'settransformer.pth')
-
-    gen(model, groupings, 10)
+    os.remove("crash_checkpoint.pth")
+    os.remove("crash_checkpoint.pth.logs")
+    save_checkpoint(model, opt, logs, current_epoch, checkpoint_file)
