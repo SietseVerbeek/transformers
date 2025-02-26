@@ -10,7 +10,6 @@ from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 
 from models.PMATransformer import PMA_GroupingModel
-from models.transformer import Transformer
 from pma import Config, _results_dir
 from utils.data import get_set_partition_batch
 from utils.fs import load_checkpoint, save_checkpoint
@@ -18,9 +17,10 @@ from utils.masking import create_mask
 
 
 def sequence_train_epoch(
-    model: Transformer,
+    model: PMA_GroupingModel,
     optimizer: Optimizer,
     loss_fn: _Loss,
+    gen_func,
     batch_size: int,
     num_batches: int,
     set_size: int,
@@ -31,7 +31,7 @@ def sequence_train_epoch(
     average_loss = 0
 
     for i in range(num_batches):
-        src, tgt = get_set_partition_batch(batch_size, set_size, groupings)
+        src, tgt = gen_func(batch_size, set_size, groupings)
         src, tgt = src.to(device), tgt.to(device)
 
         tgt_input = tgt[:, :-1]
@@ -62,10 +62,11 @@ def sequence_train_epoch(
 
 
 def train(
-    model: Transformer,
+    model: PMA_GroupingModel,
     epochs: int,
     optimizer: Optimizer,
     loss_fn: _Loss,
+    gen_func,
     groupings: npt.NDArray[np.int_],
     num_batches: int,
     set_size: int,
@@ -84,6 +85,7 @@ def train(
             model,
             optimizer,
             loss_fn,
+            gen_func,
             batch_size,
             num_batches,
             set_size,
@@ -151,8 +153,23 @@ if __name__ == "__main__":
     mappings = np.array([map_one_border(c.N_sites, i) for i in range(1, c.N_sites + 1)])
     groupings = np.argmax(mappings, axis=1)
 
+    def generate_func(batch_size, set_size, groupings):
+        src, tgt = get_set_partition_batch(batch_size, set_size, groupings)
+        perm = torch.randperm(src.size()[-1])
+        return src[..., perm], tgt[..., perm]
+
+
     try:
-        train(model, c.epochs, opt, loss_fn, groupings, 330, c.set_size)
+        train(
+            model=model, 
+            epochs=c.epochs, 
+            optimizer=opt, 
+            loss_fn=loss_fn, 
+            gen_func=get_set_partition_batch, 
+            groupings=groupings, 
+            num_batches=330, 
+            set_size=c.set_size
+        )
     except KeyboardInterrupt:
         print("KeyboardInterrupt recieved")
 

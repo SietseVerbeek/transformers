@@ -13,6 +13,7 @@ from utils.masking import create_mask
 
 def gen(
     model,
+    gen_func,
     groupings,
     batch_size,
     set_size,
@@ -20,7 +21,7 @@ def gen(
     device='cuda'
 ):
 
-    src, tgt = get_set_partition_batch(batch_size, set_size, groupings)
+    src, tgt = gen_func(batch_size, set_size, groupings)
 
     # get_set_partition does not give the exact batch_size requested,
     # it changes the batch size to give a uniform dist
@@ -78,7 +79,12 @@ if __name__ == "__main__":
     mappings = np.array([map_one_border(c.N_sites, i) for i in range(1, c.N_sites + 1)])
     groupings = np.argmax(mappings, axis=1)
 
-    sites_correct = gen(model, groupings, c.batch_size, c.set_size, c.N_sites)
+    def generate_func(batch_size, set_size, groupings):
+        src, tgt = get_set_partition_batch(batch_size, set_size, groupings)
+        perm = torch.randperm(src.size()[-1])
+        return src[..., perm], tgt[..., perm]
+
+    sites_correct = gen(model, generate_func, groupings, c.batch_size, c.set_size, c.N_sites)
 
     plt.plot(logs["loss"], label="loss")
     plt.title(f"sites correct {sites_correct:.4f}")
