@@ -75,7 +75,7 @@ def train(
     start_time = process_time()
     global current_epoch, logs
 
-    for current_epoch in range(current_epoch, current_epoch + epochs):
+    while not converged(logs["loss"], delta=1e-2):
         epoch_start_time = process_time()
 
         print("=" * 30, f"starting epoch {current_epoch}", "=" * 30)
@@ -90,7 +90,7 @@ def train(
             num_batches,
             set_size,
             groupings,
-            device=device
+            device=device,
         )
         logs["loss"].append(train_loss)
 
@@ -101,8 +101,18 @@ def train(
 
         save_checkpoint(model, optimizer, logs, current_epoch, "crash_checkpoint.pth")
 
+        current_epoch += 1
+
     print(f"total training time: {process_time() - start_time}s")
     logs["logs"].append(f"total training time: {process_time() - start_time}s\n")
+
+
+def converged(losses: list[float], delta=1e-4, patience: int = 5) -> bool:
+    if len(losses) < patience:
+        return False
+    if max(losses[-patience:]) - min(losses[-patience:]) < delta:
+        return True
+    return False
 
 
 if __name__ == "__main__":
@@ -155,20 +165,20 @@ if __name__ == "__main__":
 
     def generate_func(batch_size, set_size, groupings):
         src, tgt = get_set_partition_batch(batch_size, set_size, groupings)
+        return src, tgt
         perm = torch.randperm(src.size()[-1])
         return src[..., perm], tgt[..., perm]
 
-
     try:
         train(
-            model=model, 
-            epochs=c.epochs, 
-            optimizer=opt, 
-            loss_fn=loss_fn, 
-            gen_func=get_set_partition_batch, 
-            groupings=groupings, 
-            num_batches=330, 
-            set_size=c.set_size
+            model=model,
+            epochs=c.epochs,
+            optimizer=opt,
+            loss_fn=loss_fn,
+            gen_func=get_set_partition_batch,
+            groupings=groupings,
+            num_batches=330,
+            set_size=c.set_size,
         )
     except KeyboardInterrupt:
         print("KeyboardInterrupt recieved")
