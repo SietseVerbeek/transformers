@@ -44,6 +44,10 @@ def gen(
         idx = logits[:, -1].argmax(dim=-1).view(-1, 1)
         output = torch.cat((output, idx), dim=-1)
 
+    # Flip group labels on tgt starting with 1, generation always starts at 0
+    mask = tgt[..., 0].unsqueeze(1).expand(-1, tgt.size()[-1])
+    tgt = tgt ^ mask
+
     return (output == tgt).count_nonzero() / output.nelement()
 
 
@@ -79,8 +83,16 @@ if __name__ == "__main__":
     mappings = np.array([map_one_border(c.N_sites, i) for i in range(1, c.N_sites + 1)])
     groupings = np.argmax(mappings, axis=1)
 
-    def generate_func(batch_size, set_size, groupings):
+    def generate_func(batch_size, set_size, groupings, device='cuda'):
         src, tgt = get_set_partition_batch(batch_size, set_size, groupings)
+
+        perm = torch.stack(
+            [torch.randperm(src.size()[-1], device=device) for _ in range(src.size()[0])]
+        )
+        tgt = torch.gather(tgt, 1, perm)
+
+        perm = perm.unsqueeze(1).expand(-1, src.size()[1], -1)
+        src = torch.gather(src, 2, perm)
 
         # flip bits based on "temperature fluctuations"
         flip = torch.rand(src.shape)
