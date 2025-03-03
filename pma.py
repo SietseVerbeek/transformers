@@ -32,4 +32,4 @@ class Config:
         self.batch_size = training["batch_size"]
         self.learn_rate = training["learn_rate"]
         self.betas = (training["beta1"], training["beta2"])
-        self.epochs = training["epochs"]
+        self.max_epochs = training["max_epochs"]

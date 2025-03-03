@@ -18,4 +18,4 @@ training:
   learn_rate: 0.001
   beta1: 0.9
   beta2: 0.99
-  epochs: 10
+  max_epochs: 10

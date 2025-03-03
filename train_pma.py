@@ -63,7 +63,7 @@ def sequence_train_epoch(
 
 def train(
     model: PMA_GroupingModel,
-    epochs: int,
+    max_epochs: int,
     optimizer: Optimizer,
     loss_fn: _Loss,
     gen_func,
@@ -75,7 +75,7 @@ def train(
     start_time = process_time()
     global current_epoch, logs
 
-    while not converged(logs["loss"], delta=1e-2):
+    while not converged(logs["loss"], delta=1e-2) and current_epoch < max_epochs:
         epoch_start_time = process_time()
 
         print("=" * 30, f"starting epoch {current_epoch}", "=" * 30)
@@ -172,7 +172,7 @@ if __name__ == "__main__":
     try:
         train(
             model=model,
-            epochs=c.epochs,
+            max_epochs=c.max_epochs,
             optimizer=opt,
             loss_fn=loss_fn,
             gen_func=get_set_partition_batch,
