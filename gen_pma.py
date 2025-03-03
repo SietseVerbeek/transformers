@@ -81,6 +81,12 @@ if __name__ == "__main__":
 
     def generate_func(batch_size, set_size, groupings):
         src, tgt = get_set_partition_batch(batch_size, set_size, groupings)
+
+        # flip bits based on "temperature fluctuations"
+        flip = torch.rand(src.shape)
+        temp_mask = flip > .95
+        src[temp_mask] = src[temp_mask] ^ 1
+
         return src, tgt
 
     sites_correct = gen(model, generate_func, groupings, c.batch_size, c.set_size, c.N_sites)
