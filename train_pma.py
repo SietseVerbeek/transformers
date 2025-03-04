@@ -166,8 +166,6 @@ if __name__ == "__main__":
     def generate_func(batch_size, set_size, groupings):
         src, tgt = get_set_partition_batch(batch_size, set_size, groupings)
         return src, tgt
-        perm = torch.randperm(src.size()[-1])
-        return src[..., perm], tgt[..., perm]
 
     try:
         train(
@@ -175,7 +173,7 @@ if __name__ == "__main__":
             max_epochs=c.max_epochs,
             optimizer=opt,
             loss_fn=loss_fn,
-            gen_func=get_set_partition_batch,
+            gen_func=generate_func,
             groupings=groupings,
             num_batches=330,
             set_size=c.set_size,
