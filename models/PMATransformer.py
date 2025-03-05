@@ -2,6 +2,7 @@ import json
 import math
 from typing import Self
 import torch
+from torch import Tensor
 import torch.nn as nn
 import torch.nn.functional as F
 
@@ -58,7 +59,8 @@ class PMA_GroupingModel(nn.Module):
         super().__init__()
 
         self.embed_dim = embed_dim
-        self.embedding = nn.Embedding(2, embed_dim)
+        self.src_embed = nn.Linear(embed_dim, embed_dim)
+        self.tgt_embed = nn.Embedding(2, embed_dim)
         self.positional_encoding = PositionalEncoding(embed_dim)
 
         # self attention in sequences
@@ -83,7 +85,7 @@ class PMA_GroupingModel(nn.Module):
         # output into probabilities for group labels
         self.linear_out = nn.Linear(embed_dim, queries)
 
-    def forward(self, src, tgt, tgt_mask=None):
+    def forward(self, src: Tensor, tgt: Tensor, tgt_mask=None):
         """
         Args:
             src: Tensor of shape (batch, set_size, seq_length) - Binary input sequences
@@ -95,10 +97,15 @@ class PMA_GroupingModel(nn.Module):
 
         batch_size = src.shape[0]
 
+        # convert input to (batch, seq_length, embed_dim)
+        src = src.view(torch.float32)
+        src = src.permute(0, 2, 1)
+        src = F.pad(src, (0, self.embed_dim - src.shape[-1]), value=None)
+
         # embed the sequences, (batch, set_size, seq_lenght, embed_dim)
-        src = self.positional_encoding(self.embedding(src) * math.sqrt(self.embed_dim))
+        src = self.positional_encoding(self.src_embed(src) * math.sqrt(self.embed_dim))
         # embed the target, (batch, tgt_lenght, embed_dim)
-        tgt = self.positional_encoding(self.embedding(tgt) * math.sqrt(self.embed_dim))
+        tgt = self.positional_encoding(self.tgt_embed(tgt) * math.sqrt(self.embed_dim))
 
         src = src.view(-1, *src.shape[-2:])
         src = self.self_attention(src)
