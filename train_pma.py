@@ -75,7 +75,7 @@ def train(
     start_time = process_time()
     global current_epoch, logs
 
-    while not converged(logs["loss"], delta=1e-2) and current_epoch < max_epochs:
+    while not converged(logs["loss"], delta=1e-3) and current_epoch < max_epochs:
         epoch_start_time = process_time()
 
         print("=" * 30, f"starting epoch {current_epoch}", "=" * 30)
