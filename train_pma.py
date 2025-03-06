@@ -1,6 +1,7 @@
 import argparse
 import os
 from time import process_time
+import itertools
 
 import numpy as np
 import numpy.typing as npt
@@ -154,13 +155,21 @@ if __name__ == "__main__":
 
     model, opt, current_epoch, logs = load_checkpoint(checkpoint_file, model, opt)
 
-    def map_one_border(N_sites, border_idx):
-        map = np.zeros((2, N_sites)).astype("bool")
-        map[0, :border_idx] = 1
-        map[1, border_idx:] = 1
+    def map_borders(N_sites, border_idxs: list[int]):
+        groups = len(border_idxs) + 1
+        map = np.zeros((groups, N_sites)).astype("bool")
+
+        for i in range(len(border_idxs) - 1):
+            start, end = border_idxs[i], border_idxs[i+1]
+            map[i + 1, start:end] = True
+
+        map[0, :border_idxs[0]] = True
+        map[-1, border_idxs[-1]:] = True
+
         return map
 
-    mappings = np.array([map_one_border(c.N_sites, i) for i in range(1, c.N_sites + 1)])
+    borders_list = [list(borders) for borders in itertools.combinations(range(1, c.N_sites), 2)]
+    mappings = np.array([map_borders(c.N_sites, borders) for borders in borders_list])
     groupings = np.argmax(mappings, axis=1)
 
     def generate_func(batch_size, set_size, groupings):
