@@ -43,7 +43,7 @@ def get_mcm_partition_batch(
     icc_sizes = np.apply_along_axis(np.bincount, axis=1, arr=groupings)
 
     tgt = torch.tensor(np.repeat(groupings, configs_per_map, axis=0), dtype=torch.long)
-    src = torch.empty((batch_size, N_sites * set_size), dtype=torch.long)
+    src = torch.empty((batch_size, set_size, N_sites), dtype=torch.long)
 
     for idx in range(groupings.shape[0]):
 
@@ -64,7 +64,7 @@ def get_mcm_partition_batch(
         left_binary = (left_ints.unsqueeze(-1) >> torch.arange(left_icc - 1, -1, -1)) & 1
         right_binary = (right_ints.unsqueeze(-1) >> torch.arange(right_icc - 1, -1, -1)) & 1
 
-        src[idx * configs_per_map: (idx + 1) * configs_per_map] = torch.cat((left_binary, right_binary), dim=-1).reshape(configs_per_map, -1)
+        src[idx * configs_per_map: (idx + 1) * configs_per_map] = torch.cat((left_binary, right_binary), dim=-1)
 
     return src, tgt
 
@@ -169,11 +169,11 @@ if __name__ == "__main__":
 
     dists: Dict[int, Dirichlet] = dict()
 
-    for N in range(1, 20):
+    for N in range(1, N_sites):
         dists.update([(N, Dirichlet(torch.full((2 ** N, ), .5)))])
 
     start = perf_counter()
-    # get_mcm_partition_batch(300, 20, groupings, dists)
+    get_mcm_partition_batch(20, 10, groupings, dists)
     # print(perf_counter() - start)
     # get_simple_partition_batch(10, 4, groupings)
-    get_set_partition_batch(10, 6, groupings)
+    # get_set_partition_batch(10, 6, groupings)

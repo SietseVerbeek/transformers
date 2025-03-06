@@ -1,17 +1,19 @@
 import argparse
 import os
 from time import process_time
+from typing import Dict
 
 import numpy as np
 import numpy.typing as npt
 import torch
 from torch import nn
+from torch.distributions.dirichlet import Dirichlet
 from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 
 from models.PMATransformer import PMA_GroupingModel
 from pma import Config, _results_dir
-from utils.data import get_set_partition_batch
+from utils.data import get_mcm_partition_batch, get_set_partition_batch
 from utils.fs import load_checkpoint, save_checkpoint
 from utils.masking import create_mask
 
@@ -160,11 +162,17 @@ if __name__ == "__main__":
         map[1, border_idx:] = 1
         return map
 
-    mappings = np.array([map_one_border(c.N_sites, i) for i in range(1, c.N_sites + 1)])
+    # mapping with a single ICC does not yet work with get_mcm_partition_batch
+    mappings = np.array([map_one_border(c.N_sites, i) for i in range(1, c.N_sites)])
     groupings = np.argmax(mappings, axis=1)
 
+    dists: Dict[int, Dirichlet] = dict()
+
+    for N in range(1, c.N_sites):
+        dists.update([(N, Dirichlet(torch.full((2 ** N, ), .5)))])
+
     def generate_func(batch_size, set_size, groupings):
-        src, tgt = get_set_partition_batch(batch_size, set_size, groupings)
+        src, tgt = get_mcm_partition_batch(batch_size, set_size, groupings, dists)
         return src, tgt
 
     try:
