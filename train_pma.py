@@ -13,6 +13,7 @@ from models.PMATransformer import PMA_GroupingModel
 from pma import Config, _results_dir
 from utils.data import get_set_partition_batch
 from utils.fs import load_checkpoint, save_checkpoint
+from utils.fwht import gen_spin_model_batch
 from utils.masking import create_mask
 
 
@@ -164,7 +165,7 @@ if __name__ == "__main__":
     groupings = np.argmax(mappings, axis=1)
 
     def generate_func(batch_size, set_size, groupings):
-        src, tgt = get_set_partition_batch(batch_size, set_size, groupings)
+        src, tgt = gen_spin_model_batch(3, batch_size, set_size, groupings)
         return src, tgt
 
     try:
