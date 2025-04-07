@@ -63,7 +63,7 @@ def int_to_binary_array(configurations: npt.NDArray, N: int) -> npt.NDArray[np.u
     return binary
 
 
-def pairwise_interactions(groupings):
+def pairwise_interactions(labels):
     """
     Creates integer representations of pairwise interactions between members of a group
     defined in the groupings variable
@@ -76,16 +76,17 @@ def pairwise_interactions(groupings):
     """
 
     interactions = []
-    N_sites = groupings.shape[-1]
 
-    for group in groupings:
-        indices = np.where(group)[0]  # Get active variable indices
+    N_sites = labels.shape[-1]
+    num_groups = max(labels) + 1
+    idx_groups = [[] for i in range(num_groups)]
 
-        for i in range(len(indices) - 1):  # Iterate over neighbor pairs
-            print(N_sites - 1 - indices[i])
-            pair_mask = (1 << N_sites - 1 - indices[i]) | (
-                1 << N_sites - 1 - indices[i + 1]
-            )  # Create bitmask using bit shifts
+    for idx, group in enumerate(labels):
+        idx_groups[group].append(idx)
+
+    for group in idx_groups:
+        for i in range(len(group) - 1):  # Iterate over neighbor pairs
+            pair_mask = (1 << (N_sites - 1 - group[i])) | (1 << (N_sites - 1 - group[i + 1]))
             interactions.append(pair_mask)
 
     return np.array(interactions)
@@ -113,15 +114,11 @@ def gen_spin_model_batch(
 
     for idx in range(N_maps):
         weights = np.zeros(2**N_sites)
-        print(groupings[idx])
         interactions = pairwise_interactions(groupings[idx])
-        print(interactions)
         for i in interactions:
-            print(bin(i))
-        weights[interactions] = weight
+            weights[interactions] = weight
 
         choices = generate_data(model, weights, N_sites, model, configs_per_map * set_size)
-        print(states[choices].shape)
         src[idx * configs_per_map : (idx + 1) * configs_per_map] = torch.tensor(
             states[choices].reshape(-1, set_size, N_sites)
         )
@@ -145,34 +142,14 @@ if __name__ == "__main__":
     #     print(bin(i))
 
     # Example input
-    groups = np.array(
-        [
-            [
-                [True, False, False, False, False, False],
-                [False, True, True, True, True, True],
-            ],
-            [
-                [True, True, False, False, False, False],
-                [False, False, True, True, True, True],
-            ],
-            [
-                [True, True, True, False, False, False],
-                [False, False, False, True, True, True],
-            ],
-            [
-                [True, True, True, True, False, False],
-                [False, False, False, False, True, True],
-            ],
-            [
-                [True, True, True, True, True, False],
-                [False, False, False, False, False, True],
-            ],
-            [
-                [True, True, True, True, True, True],
-                [False, False, False, False, False, False],
-            ],
-        ]
-    )
+    groups = np.array([
+        [0, 1, 1, 1, 1, 1],
+        [0, 0, 1, 1, 1, 1],
+        [0, 0, 0, 1, 1, 1],
+        [0, 0, 0, 0, 1, 1],
+        [0, 0, 0, 0, 0, 1],
+        [0, 0, 0, 0, 0, 0],
+    ])
 
-    print(gen_spin_model_batch(1.5, 12, 5, groups))
+    print(gen_spin_model_batch(10, 12, 5, groups))
     # print(pairwise_interactions(groups))
