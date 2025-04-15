@@ -28,7 +28,7 @@ class Config:
 
         training = config["training"]
         self.N_sites = training["N_sites"]
-        self.set_size = training["N_sites"]
+        self.set_size = training["set_size"]
         self.batch_size = training["batch_size"]
         self.learn_rate = training["learn_rate"]
         self.betas = (training["beta1"], training["beta2"])
