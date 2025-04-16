@@ -33,3 +33,4 @@ class Config:
         self.learn_rate = training["learn_rate"]
         self.betas = (training["beta1"], training["beta2"])
         self.max_epochs = training["max_epochs"]
+        self.beta_temp = training["beta_temp"]

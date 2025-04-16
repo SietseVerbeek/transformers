@@ -85,7 +85,7 @@ if __name__ == "__main__":
     groupings = np.argmax(mappings, axis=1)
 
     def generate_func(batch_size, set_size, groupings):
-        src, tgt = gen_spin_model_batch(3, batch_size, set_size, groupings)
+        src, tgt = gen_spin_model_batch(c.beta_temp, batch_size, set_size, groupings)
         return src, tgt
 
     var_of_info, sites_correct = gen(model, generate_func, groupings, c.batch_size, c.set_size, c.N_sites)
