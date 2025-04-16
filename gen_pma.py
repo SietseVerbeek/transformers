@@ -9,6 +9,7 @@ from pma import Config, _results_dir
 from utils.data import get_set_partition_batch
 from utils.fs import load_checkpoint
 from utils.masking import create_mask
+from utils.tests import batch_normalized_vi
 
 
 def gen(
@@ -44,7 +45,10 @@ def gen(
         idx = logits[:, -1].argmax(dim=-1).view(-1, 1)
         output = torch.cat((output, idx), dim=-1)
 
-    return (output == tgt).count_nonzero() / output.nelement()
+    fraction = (output == tgt).count_nonzero() / output.nelement()
+    var_of_info = batch_normalized_vi(output, tgt)
+
+    return var_of_info, fraction
 
 
 if __name__ == "__main__":
@@ -83,9 +87,9 @@ if __name__ == "__main__":
         src, tgt = get_set_partition_batch(batch_size, set_size, groupings)
         return src, tgt
 
-    sites_correct = gen(model, generate_func, groupings, c.batch_size, c.set_size, c.N_sites)
+    var_of_info, sites_correct = gen(model, generate_func, groupings, c.batch_size, c.set_size, c.N_sites)
 
     plt.plot(logs["loss"], label="loss")
-    plt.title(f"sites correct {sites_correct:.4f}")
+    plt.title(f"VOI {var_of_info:.4f}, sites correct {sites_correct:.4f}")
     plt.legend()
     plt.savefig(_results_dir(f"model_{c.model_id}__id_{c.train_id}.jpg"))
