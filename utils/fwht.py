@@ -123,7 +123,9 @@ def gen_spin_model_batch(
             states[choices].reshape(-1, set_size, N_sites)
         )
 
-    return src, tgt
+    permutation = torch.randperm(src.size()[0])
+
+    return src[permutation], tgt[permutation]
 
 if __name__ == "__main__":
     # n = 6
