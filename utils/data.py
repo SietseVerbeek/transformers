@@ -176,4 +176,6 @@ if __name__ == "__main__":
     # get_mcm_partition_batch(300, 20, groupings, dists)
     # print(perf_counter() - start)
     # get_simple_partition_batch(10, 4, groupings)
-    get_set_partition_batch(10, 6, groupings)
+    start = perf_counter()
+    get_set_partition_batch(200, 20, groupings)
+    print(perf_counter() - start)

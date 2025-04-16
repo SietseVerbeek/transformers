@@ -1,3 +1,4 @@
+from time import perf_counter
 import numpy.typing as npt
 import numpy as np
 from numba import njit
@@ -144,14 +145,20 @@ if __name__ == "__main__":
     #     print(bin(i))
 
     # Example input
-    groups = np.array([
-        [0, 1, 1, 1, 1, 1],
-        [0, 0, 1, 1, 1, 1],
-        [0, 0, 0, 1, 1, 1],
-        [0, 0, 0, 0, 1, 1],
-        [0, 0, 0, 0, 0, 1],
-        [0, 0, 0, 0, 0, 0],
-    ])
+    def map_one_border(N_sites, border_idx):
 
-    print(gen_spin_model_batch(10, 12, 5, groups))
+        map = np.zeros((2, N_sites)).astype('bool')
+        map[0, :border_idx] = 1
+        map[1, border_idx:] = 1
+        return map
+
+    N_sites = 15
+    mappings = np.array([map_one_border(N_sites, i) for i in range(1, N_sites + 1)])
+    groupings = np.argmax(mappings, axis=1)
+
+    for _ in range(3):
+        start = perf_counter()
+        src, tgt = gen_spin_model_batch(10, 200, 40, groupings)
+        print(perf_counter() - start)
+    print(src.shape, tgt.shape)
     # print(pairwise_interactions(groups))
