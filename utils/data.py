@@ -154,16 +154,11 @@ def get_set_partition_batch(
 
 if __name__ == "__main__":
     from time import perf_counter
-    def map_one_border(N_sites, border_idx):
-
-        map = np.zeros((2, N_sites)).astype('bool')
-        map[0, :border_idx] = 1
-        map[1, border_idx:] = 1
-        return map
+    def labelings_one_border(length):
+        return np.array([[0] * (length - i) + [1] * i for i in range(length)])
 
     N_sites = 6
-    mappings = np.array([map_one_border(N_sites, i) for i in range(1, N_sites)])
-    groupings = np.argmax(mappings, axis=1)
+    groupings = labelings_one_border(N_sites)
 
     print(groupings)
 

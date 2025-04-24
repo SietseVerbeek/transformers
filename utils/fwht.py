@@ -145,16 +145,11 @@ if __name__ == "__main__":
     #     print(bin(i))
 
     # Example input
-    def map_one_border(N_sites, border_idx):
-
-        map = np.zeros((2, N_sites)).astype('bool')
-        map[0, :border_idx] = 1
-        map[1, border_idx:] = 1
-        return map
+    def labelings_one_border(length):
+        return np.array([[0] * (length - i) + [1] * i for i in range(length)])
 
     N_sites = 15
-    mappings = np.array([map_one_border(N_sites, i) for i in range(1, N_sites + 1)])
-    groupings = np.argmax(mappings, axis=1)
+    groupings = labelings_one_border(N_sites)
 
     for _ in range(3):
         start = perf_counter()
