@@ -2,6 +2,8 @@ import numpy as np
 import numpy.typing as npt
 from torch.utils.data import Dataset
 
+from utils.fs import load_from_txt
+
 
 def generate_random_data(k: int, len: int = 8):
     """
@@ -155,29 +157,6 @@ class PaddedSrcSequenceDataset(Dataset):
         return data
 
 
-def load_from_txt(file_name: str) -> npt.NDArray[np.uint8]:
-    """
-    Load spin configurations from file. Must be text file with spin
-    configurations saved as rows. Lines starting with # are considered
-    to be comments and skipped.
-
-    Arguments:
-        file_name - name of spin configurations file
-
-    Output:
-        data - numpy array containing spin configurations
-    """
-
-    with open(file_name, "r") as file:
-        data = [
-            list(map(int, line.strip()))
-            for line in file
-            if not line.strip().startswith("#") and line.strip()
-        ]
-
-    return np.array(data, dtype=np.uint8)
-
-
 class MCMPaddedDataset(Dataset):
     def __init__(self, file_name: str, train=True) -> None:
         super().__init__()
@@ -219,9 +198,9 @@ class PartitionDataset(Dataset):
     def __init__(self, file_name) -> None:
         super().__init__()
         data = np.load(file_name)
-        self.data = data['configs'].astype(np.int_)
-        self.mappings = data['mappings'].astype(np.int_)
-        self.map_ids = data['map_ids'].astype(np.int_)
+        self.data = data["configs"].astype(np.int_)
+        self.mappings = data["mappings"].astype(np.int_)
+        self.map_ids = data["map_ids"].astype(np.int_)
 
     def __getitem__(self, index):
         return self.data[index], self.mappings[self.map_ids[index]]
