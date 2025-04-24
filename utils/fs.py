@@ -3,6 +3,8 @@ from typing import Tuple
 from torch import nn
 import torch
 from torch.optim.optimizer import Optimizer
+import numpy as np
+import numpy.typing as npt
 
 
 def info_dir(filename: str) -> str:
@@ -65,3 +67,26 @@ def load_checkpoint(
             file.write("=> no checkpoint found at '{}'\n".format(filename))
 
     return model, optimizer, start_epoch, logs
+
+
+def load_from_txt(file_name: str) -> npt.NDArray[np.uint8]:
+    """
+    Load spin configurations from file. Must be text file with spin
+    configurations saved as rows. Lines starting with # are considered
+    to be comments and skipped.
+
+    Arguments:
+        file_name - name of spin configurations file
+
+    Output:
+        data - numpy array containing spin configurations
+    """
+
+    with open(file_name, "r") as file:
+        data = [
+            list(map(int, line.strip()))
+            for line in file
+            if not line.strip().startswith("#") and line.strip()
+        ]
+
+    return np.array(data, dtype=np.uint8)
