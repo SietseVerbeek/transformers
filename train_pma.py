@@ -177,14 +177,10 @@ if __name__ == "__main__":
 
     model, opt, current_epoch, logs = load_checkpoint(checkpoint_file, model, opt)
 
-    def map_one_border(N_sites, border_idx):
-        map = np.zeros((2, N_sites)).astype("bool")
-        map[0, :border_idx] = 1
-        map[1, border_idx:] = 1
-        return map
+    def labelings_one_border(length):
+        return np.array([[0] * (length - i) + [1] * i for i in range(length)])
 
-    mappings = np.array([map_one_border(c.N_sites, i) for i in range(1, c.N_sites + 1)])
-    groupings = np.argmax(mappings, axis=1)
+    groupings = labelings_one_border(c.N_sites)
 
     def generate_func(batch_size, set_size, groupings):
         src, tgt = gen_spin_model_batch(c.beta_temp, batch_size, set_size, groupings)
