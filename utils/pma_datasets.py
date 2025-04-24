@@ -18,7 +18,7 @@ class FullyPairwiseDataset(Dataset):
         N_sites = labelings.shape[-1]
         self.data = np.ndarray(
             (len(labelings) * len(betas) * sample_size, set_size, N_sites),
-            dtype=np.uint8,
+            dtype=np.int_,
         )
         self.targets = np.repeat(labelings, sample_size, axis=0)
         print(self.targets)
@@ -31,6 +31,7 @@ class FullyPairwiseDataset(Dataset):
         data_dir = "data/fully_pairwise/val/" if validation else "data/fully_pairwise/" 
         for i, dir in enumerate(dirs_array):
             for j, beta in enumerate(betas):
+                print(i, j)
                 filename = data_dir + f"{N_sites}/{dir}/{beta:.2f}"
                 samples = load_from_txt(filename)
 
