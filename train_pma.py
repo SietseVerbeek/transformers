@@ -9,31 +9,26 @@ import torch
 from torch import nn
 from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
+from torch.utils.data import DataLoader
 
 from models.PMATransformer import PMA_GroupingModel
 from pma import Config, _results_dir
-from utils.data import get_set_partition_batch
 from utils.fs import load_checkpoint, save_checkpoint
-from utils.fwht import gen_spin_model_batch
 from utils.masking import create_mask
+from utils.pma_datasets import FullyPairwiseDataset
 
 
 def sequence_train_epoch(
     model: PMA_GroupingModel,
     optimizer: Optimizer,
     loss_fn: _Loss,
-    gen_func,
-    batch_size: int,
-    num_batches: int,
-    set_size: int,
-    groupings: npt.NDArray[np.int_],
+    dataloader: DataLoader,
     device="cuda",
 ):
     model.train()
     average_loss = 0
 
-    for i in range(num_batches):
-        src, tgt = gen_func(batch_size, set_size, groupings)
+    for src, tgt in dataloader:
         src, tgt = src.to(device), tgt.to(device)
 
         tgt_input = tgt[:, :-1]
@@ -58,7 +53,39 @@ def sequence_train_epoch(
         loss.backward()
         optimizer.step()
 
-        average_loss += loss.item() / (batch_size)
+        average_loss += loss.item() / len(dataloader)
+
+    return average_loss
+
+
+def sequence_validation_epoch(
+    model: PMA_GroupingModel, loss_fn: _Loss, dataloader: DataLoader, device="cuda"
+):
+    model.eval()
+    average_loss = 0
+
+    with torch.no_grad():
+        for src, tgt in dataloader:
+            src, tgt = src.to(device), tgt.to(device)
+
+            # Now we shift the tgt by one so with the <SOS> we predict the token at pos 1
+            tgt_input = tgt[:, :-1]
+            tgt_out = tgt[:, 1:]
+
+            src_mask, tgt_mask, src_padding_mask, tgt_padding_mask = create_mask(
+                src, tgt_input, pad_idx=4, device=device
+            )
+
+            logits = model(
+                src,
+                tgt_input,
+                tgt_mask=tgt_mask,
+            )
+
+            # pred shape must be (batch_size, #classes, seq length)
+            logits = logits.permute(0, 2, 1)
+            loss = loss_fn(logits, tgt_out)
+            average_loss += loss.item() / len(dataloader)
 
     return average_loss
 
@@ -68,16 +95,14 @@ def train(
     max_epochs: int,
     optimizer: Optimizer,
     loss_fn: _Loss,
-    gen_func,
-    groupings: npt.NDArray[np.int_],
-    num_batches: int,
-    set_size: int,
+    train_dataloader: DataLoader,
+    validation_dataloader: DataLoader,
     device="cuda",
 ):
     start_time = process_time()
     global current_epoch, logs
 
-    while not converged(logs["loss"], delta=1e-3) and current_epoch < max_epochs:
+    while not converged(logs["val_loss"], delta=1e-3) and current_epoch < max_epochs:
         epoch_start_time = process_time()
 
         print("=" * 30, f"starting epoch {current_epoch}", "=" * 30)
@@ -87,18 +112,21 @@ def train(
             model,
             optimizer,
             loss_fn,
-            gen_func,
-            batch_size,
-            num_batches,
-            set_size,
-            groupings,
+            train_dataloader,
             device=device,
         )
         logs["loss"].append(train_loss)
 
+        validate_loss = sequence_validation_epoch(
+            model, loss_fn, validation_dataloader, device
+        )
+        logs["val_loss"].append(validate_loss)
+
         print("training loss: ", train_loss)
         logs["logs"].append(f"training loss:  {train_loss}")
         run.log({"loss": train_loss})
+        print("validation loss: ", validate_loss)
+        logs["logs"].append(f"validation loss:  {validate_loss}")
         print("epoch time: ", process_time() - epoch_start_time)
         logs["logs"].append(f"epoch time: {process_time() - epoch_start_time}")
         run.log({"epoch_time": process_time() - epoch_start_time})
@@ -182,9 +210,15 @@ if __name__ == "__main__":
 
     groupings = labelings_one_border(c.N_sites)
 
-    def generate_func(batch_size, set_size, groupings):
-        src, tgt = gen_spin_model_batch(c.beta_temp, batch_size, set_size, groupings)
-        return src, tgt
+    betas = np.array([0.4, 0.5, 0.6])
+
+    train_dataset = FullyPairwiseDataset(groupings, betas, c.set_size, sample_size=500)
+    train_dataloader = DataLoader(train_dataset, 200, shuffle=True)
+
+    val_dataset = FullyPairwiseDataset(
+        groupings, betas, c.set_size, sample_size=500, validation=True
+    )
+    val_dataloader = DataLoader(val_dataset, 200, shuffle=True)
 
     try:
         train(
@@ -192,10 +226,8 @@ if __name__ == "__main__":
             max_epochs=c.max_epochs,
             optimizer=opt,
             loss_fn=loss_fn,
-            gen_func=generate_func,
-            groupings=groupings,
-            num_batches=330,
-            set_size=c.set_size,
+            train_dataloader=train_dataloader,
+            validation_dataloader=val_dataloader,
         )
     except KeyboardInterrupt:
         print("KeyboardInterrupt recieved")
