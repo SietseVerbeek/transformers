@@ -43,14 +43,10 @@ if __name__ == "__main__":
 
     model.eval()
 
-    def map_one_border(N_sites, border_idx):
-        map = np.zeros((2, N_sites)).astype("bool")
-        map[0, :border_idx] = 1
-        map[1, border_idx:] = 1
-        return map
+    def labelings_one_border(length):
+        return np.array([[0] * (length - i) + [1] * i for i in range(length)])
 
-    mappings = np.array([map_one_border(N_sites, i) for i in range(0, N_sites + 1)])
-    groupings = np.argmax(mappings, axis=1)
+    groupings = labelings_one_border(N_sites)
 
     frac_correct = 0
     frac_correct_maps = 0
