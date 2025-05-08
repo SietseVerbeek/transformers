@@ -87,6 +87,7 @@ if __name__ == "__main__":
     var_of_info, sites_correct = gen(model, generate_func, groupings, c.batch_size, c.set_size, c.N_sites)
 
     plt.plot(logs["loss"], label="loss")
+    plt.plot(logs["val_loss"], label="validation loss")
     plt.title(f"VOI {var_of_info:.4f}, sites correct {sites_correct:.4f}")
     plt.legend()
     plt.savefig(_results_dir(f"model_{c.model_id}__id_{c.train_id}.jpg"))
