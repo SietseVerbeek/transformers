@@ -20,8 +20,7 @@ class FullyPairwiseDataset(Dataset):
             (len(labelings) * len(betas) * sample_size, set_size, N_sites),
             dtype=np.int_,
         )
-        self.targets = np.repeat(labelings, sample_size, axis=0)
-        print(self.targets)
+        self.targets = np.repeat(labelings, len(betas) * sample_size, axis=0)
 
         dirs_array = np.apply_along_axis(
             lambda row: "".join(row.astype(str)),
