@@ -1,3 +1,4 @@
+from time import perf_counter
 import numpy as np
 import numpy.typing as npt
 from torch.utils.data import Dataset
@@ -15,6 +16,8 @@ class FullyPairwiseDataset(Dataset):
         validation=False,
     ) -> None:
         super().__init__()
+        start_t = perf_counter()
+
         N_sites = labelings.shape[-1]
         self.data = np.ndarray(
             (len(labelings) * len(betas) * sample_size, set_size, N_sites),
@@ -30,7 +33,6 @@ class FullyPairwiseDataset(Dataset):
         data_dir = "data/fully_pairwise/val/" if validation else "data/fully_pairwise/" 
         for i, dir in enumerate(dirs_array):
             for j, beta in enumerate(betas):
-                print(i, j)
                 filename = data_dir + f"{N_sites}/{dir}/{beta:.2f}"
                 samples = load_from_txt(filename)
 
@@ -40,6 +42,8 @@ class FullyPairwiseDataset(Dataset):
                 start_idx = (i * len(betas) + j) * sample_size
                 end_idx = (i * len(betas) + j + 1) * sample_size
                 self.data[start_idx:end_idx] = samples[choices]
+
+        print(f"data ({self.data.shape}) loaded in {perf_counter() - start_t}")
 
     def __getitem__(self, index) -> tuple[npt.NDArray[np.uint8], npt.NDArray[np.uint8]]:
         return self.data[index], self.targets[index]
