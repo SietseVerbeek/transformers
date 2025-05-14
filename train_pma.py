@@ -213,12 +213,12 @@ if __name__ == "__main__":
     betas = np.array([0.4, 0.5, 0.6])
 
     train_dataset = FullyPairwiseDataset(groupings, betas, c.set_size, sample_size=500)
-    train_dataloader = DataLoader(train_dataset, 200, shuffle=True)
+    train_dataloader = DataLoader(train_dataset, 200, shuffle=True, pin_memory=True)
 
     val_dataset = FullyPairwiseDataset(
         groupings, betas, c.set_size, sample_size=500, validation=True
     )
-    val_dataloader = DataLoader(val_dataset, 200, shuffle=True)
+    val_dataloader = DataLoader(val_dataset, 200, shuffle=True, pin_memory=True)
 
     try:
         train(
