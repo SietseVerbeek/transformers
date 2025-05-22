@@ -12,44 +12,43 @@ class FullyPairwiseDataset(Dataset):
         labelings: npt.NDArray[np.uint8],
         betas: npt.NDArray[np.float64],
         set_size: int,
-        sample_size: int = 1000,
+        samples_per_epoch: int = 1000,
         validation=False,
     ) -> None:
         super().__init__()
         start_t = perf_counter()
+        
+        self.labelings = labelings
+        self.betas = betas
+        self.set_size = set_size
+        self.samples_per_epoch = samples_per_epoch
 
         N_sites = labelings.shape[-1]
-        self.data = np.ndarray(
-            (len(labelings) * len(betas) * sample_size, set_size, N_sites),
-            dtype=np.int_,
-        )
-        self.targets = np.repeat(labelings, len(betas) * sample_size, axis=0)
 
         dirs_array = np.apply_along_axis(
             lambda row: "".join(row.astype(str)),
             axis=1,
             arr=labelings,
         )
+        self.data = [[]] * len(dirs_array)
         data_dir = "data/fully_pairwise/val/" if validation else "data/fully_pairwise/" 
         for i, dir in enumerate(dirs_array):
             for j, beta in enumerate(betas):
                 filename = data_dir + f"{N_sites}/{dir}/{beta:.2f}"
                 samples = load_from_txt(filename)
+                self.data[i].append(samples.astype('int'))
 
-                choices = np.random.randint(
-                    samples.shape[0], size=(sample_size, set_size)
-                )
-                start_idx = (i * len(betas) + j) * sample_size
-                end_idx = (i * len(betas) + j + 1) * sample_size
-                self.data[start_idx:end_idx] = samples[choices]
-
-        print(f"data ({self.data.shape}) loaded in {perf_counter() - start_t}")
+        # print(f"data ({len(self.data) * len(self.data[0]) * self.data[0][0].shape}) loaded in {perf_counter() - start_t}")
 
     def __getitem__(self, index) -> tuple[npt.NDArray[np.uint8], npt.NDArray[np.uint8]]:
-        return self.data[index], self.targets[index]
+        label_idx = np.random.randint(self.labelings.shape[0])
+        beta_idx = np.random.randint(self.betas.shape[0])
+        choices = np.random.randint(self.data[label_idx][beta_idx].shape[0], size=(self.set_size))
+        src = self.data[label_idx][beta_idx][choices]
+        return src, self.labelings[label_idx]
 
     def __len__(self) -> int:
-        return self.data.shape[0]
+        return self.samples_per_epoch
 
 
 if __name__ == "__main__":
