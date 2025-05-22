@@ -127,6 +127,7 @@ def train(
         run.log({"loss": train_loss})
         print("validation loss: ", validate_loss)
         logs["logs"].append(f"validation loss:  {validate_loss}")
+        run.log({"validation_loss": validate_loss})
         print("epoch time: ", process_time() - epoch_start_time)
         logs["logs"].append(f"epoch time: {process_time() - epoch_start_time}")
         run.log({"epoch_time": process_time() - epoch_start_time})
