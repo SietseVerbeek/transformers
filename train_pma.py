@@ -1,6 +1,7 @@
 import argparse
 import os
 from time import process_time
+import wandb
 
 import numpy as np
 import numpy.typing as npt
@@ -96,8 +97,10 @@ def train(
 
         print("training loss: ", train_loss)
         logs["logs"].append(f"training loss:  {train_loss}")
+        run.log({"loss": train_loss})
         print("epoch time: ", process_time() - epoch_start_time)
         logs["logs"].append(f"epoch time: {process_time() - epoch_start_time}")
+        run.log({"epoch_time": process_time() - epoch_start_time})
 
         save_checkpoint(model, optimizer, logs, current_epoch, "crash_checkpoint.pth")
 
@@ -122,6 +125,25 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     c = Config(args.config)
+
+    run = wandb.init(
+        # Set the wandb entity where your project will be logged (generally your team name).
+        entity="sietse-verbeek-university-of-amsterdam",
+        # Set the wandb project where this run will be logged.
+        project="testing",
+        # Track hyperparameters and run metadata.
+        config={
+            "model_id": c.model_id,
+            "train_id": c.train_id,
+            "learning_rate": c.learn_rate,
+            "N_sites": c.N_sites,
+            "set_size": c.set_size,
+            "batch_size": c.batch_size,
+            "learn_rate": c.learn_rate,
+            "betas": c.betas,
+            "max_epochs": c.max_epochs,
+        },
+    )
 
     batch_size = 200
 
@@ -184,3 +206,4 @@ if __name__ == "__main__":
     os.remove("crash_checkpoint.pth")
     os.remove("crash_checkpoint.pth.logs")
     save_checkpoint(model, opt, logs, current_epoch, checkpoint_file)
+    run.finish()
