@@ -135,7 +135,7 @@ if __name__ == "__main__":
         # Track hyperparameters and run metadata.
         config={
             "model_id": c.model_id,
-            "train_id": c.train_id,
+            "id": c.train_id,
             "learning_rate": c.learn_rate,
             "N_sites": c.N_sites,
             "set_size": c.set_size,
