@@ -143,6 +143,7 @@ if __name__ == "__main__":
             "learn_rate": c.learn_rate,
             "betas": c.betas,
             "max_epochs": c.max_epochs,
+            "train_beta_temps": c.train_beta_temps,
         },
     )
 
@@ -183,7 +184,7 @@ if __name__ == "__main__":
     groupings = labelings_one_border(c.N_sites)
 
     def generate_func(batch_size, set_size, groupings):
-        temps = [0.4, 0.5, 0.6]
+        temps = c.train_beta_temps
         src_list, tgt_list = [], []
         for temp in temps:
             src, tgt = gen_spin_model_batch(temp, batch_size // len(temps), set_size, groupings)
