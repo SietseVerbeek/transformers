@@ -183,7 +183,14 @@ if __name__ == "__main__":
     groupings = labelings_one_border(c.N_sites)
 
     def generate_func(batch_size, set_size, groupings):
-        src, tgt = gen_spin_model_batch(c.beta_temp, batch_size, set_size, groupings)
+        temps = [0.4, 0.5, 0.6]
+        src_list, tgt_list = [], []
+        for temp in temps:
+            src, tgt = gen_spin_model_batch(temp, batch_size // len(temps), set_size, groupings)
+            src_list.append(src)
+            tgt_list.append(tgt)
+        src = torch.cat(src_list)
+        tgt = torch.cat(tgt_list)
         return src, tgt
 
     try:
