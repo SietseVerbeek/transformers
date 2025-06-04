@@ -1,4 +1,6 @@
 import os
+from os.path import isfile
+from pathlib import Path
 from typing import Tuple
 from torch import nn
 import torch
@@ -92,3 +94,28 @@ def load_from_txt(file_name: str) -> npt.NDArray[np.uint8]:
         ]
 
     return np.array(data, dtype=np.uint8)
+
+def save_configurations(
+            configurations: npt.NDArray,
+            file_name: str,
+            header=""
+        ) -> None:
+    """
+    Save MCM spin configurations in text and npy file.
+
+    Arguments:
+        configurations - numpy array with integer representation of 
+                spin configurations
+        N - number of sites
+        file_name - name of file to save
+
+    Output:
+        None - Writes files: {filename}
+    """
+
+    if isfile(file_name):
+        print(f"File {file_name} already exists")
+        raise FileExistsError
+
+    np.savetxt(file_name, configurations, fmt="%s", delimiter="", header=header)
+
