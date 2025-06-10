@@ -35,3 +35,4 @@ class Config:
         self.max_epochs = training["max_epochs"]
         self.train_beta_temps = training["train_beta_temps"]
         self.beta_temp = training["beta_temp"]
+        self.permuted = training["permuted"]

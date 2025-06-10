@@ -21,3 +21,4 @@ training:
   max_epochs: 10
   train_beta_temps: [0.4, 0.5, 0.6]
   beta_temp: 0.9
+  permuted: false

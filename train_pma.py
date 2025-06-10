@@ -144,6 +144,7 @@ if __name__ == "__main__":
             "betas": c.betas,
             "max_epochs": c.max_epochs,
             "train_beta_temps": c.train_beta_temps,
+            "permuted": c.permuted,
         },
     )
 
@@ -192,6 +193,15 @@ if __name__ == "__main__":
             tgt_list.append(tgt)
         src = torch.cat(src_list)
         tgt = torch.cat(tgt_list)
+
+        if c.permuted:
+            perm = torch.stack(
+                [torch.randperm(src.size()[-1], device=device) for _ in range(src.size()[0])]
+            )
+            tgt = torch.gather(tgt, 1, perm)
+
+            perm = perm.unsqueeze(1).expand(-1, src.size()[1], -1)
+            src = torch.gather(src, 2, perm)
         return src, tgt
 
     try:
