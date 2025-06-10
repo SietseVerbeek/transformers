@@ -102,7 +102,7 @@ def train(
         logs["logs"].append(f"epoch time: {process_time() - epoch_start_time}")
         run.log({"epoch_time": process_time() - epoch_start_time})
 
-        save_checkpoint(model, optimizer, logs, current_epoch, "crash_checkpoint.pth")
+        save_checkpoint(model, optimizer, logs, current_epoch, checkpoint_file)
 
         current_epoch += 1
 
@@ -203,7 +203,5 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print("KeyboardInterrupt recieved")
 
-    os.remove("crash_checkpoint.pth")
-    os.remove("crash_checkpoint.pth.logs")
-    save_checkpoint(model, opt, logs, current_epoch, checkpoint_file)
+    save_checkpoint(model, opt, logs, current_epoch, checkpoint_file, write_logs=True)
     run.finish()

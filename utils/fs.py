@@ -19,6 +19,7 @@ def save_checkpoint(
     logs: dict[str, list],
     epoch: int,
     filename: str,
+    write_logs: bool = False,
 ) -> None:
     state = {
         "epoch": epoch,
@@ -27,8 +28,9 @@ def save_checkpoint(
         "logs": logs,
     }
     torch.save(state, filename)
-    with open(filename + ".logs", "a") as file:
-        file.write('\n'.join(logs["logs"]))
+    if write_logs:
+        with open(filename + ".logs", "a") as file:
+            file.write('\n'.join(logs["logs"]))
 
 
 # https://discuss.pytorch.org/t/loading-a-saved-model-for-continue-training/17244/3
