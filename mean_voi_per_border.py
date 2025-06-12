@@ -76,17 +76,23 @@ if __name__ == "__main__":
     # Create subplots
     fig, axes = plt.subplots(rows, cols, figsize=(cols * 4, rows * 3))
     axes = axes.flatten()  # Flatten in case of 2D array of axes
+
+    results_dict = {}
     
     for i, grouping in enumerate(groupings):
         means = np.empty_like(betas)
         stds = np.empty_like(betas)
         ax = axes[i]
 
+        border_pos = N - i
+
         for j, beta in enumerate(betas): 
             src, tgt = gen_spin_model_batch(beta, 10, 50, grouping[None, ...])
 
             batch_size = src.shape[0]
             output = torch.zeros((batch_size, 1), dtype=torch.int64, device=device)
+
+            dict_id = f"{border_pos}_{beta:.2f}_"
 
             for _ in range(N -1):
 
@@ -106,16 +112,21 @@ if __name__ == "__main__":
             fraction = (output == tgt).count_nonzero() / output.nelement()
             var_of_info = batch_normalized_vi(output, tgt)
 
+            results_dict[dict_id + "vi"] = var_of_info
+            results_dict[dict_id + "tgt"] = tgt.cpu().numpy()
+            results_dict[dict_id + "output"] = output.cpu().numpy()
+
             means[j] = var_of_info.mean()
             stds[j] = var_of_info.std()
             # print('mean', var_of_info.mean())
             # print('std', var_of_info.std())
         ax.errorbar(betas, means, yerr=stds)
-        ax.set_title(f"border pos {N - i}")
+        ax.set_title(f"border pos {border_pos}")
         # Hide any unused subplots
     for j in range(i + 1, len(axes)):
         fig.delaxes(axes[j])  # Or: axes[j].axis('off')
 
     plt.tight_layout()
     plt.savefig(f'results/pma/mean_voi_beta_border_pos__{c.model_id}__{c.train_id}')
+    np.savez(f'results/pma/mean_voi_data__{c.model_id}__{c.train_id}', **results_dict)
 
