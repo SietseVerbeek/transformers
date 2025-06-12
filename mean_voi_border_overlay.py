@@ -42,7 +42,6 @@ def batch_normalized_vi(results, truth):
 if __name__ == "__main__":
 
 
-    N = 10
     device = "cuda"
     parser = argparse.ArgumentParser()
     parser.add_argument("config", type=str)
@@ -50,6 +49,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     c = Config(args.config)
+    N = c.N_sites
     model_file = _results_dir(f"model_{c.model_id}.params")
     checkpoint_file = _results_dir(f"model_{c.model_id}__id_{c.train_id}.pth")
 
@@ -106,7 +106,7 @@ if __name__ == "__main__":
 
             means[j] = var_of_info.mean()
             stds[j] = var_of_info.std()
-        plt.plot(means, label=f"pos {border_pos}")
+        plt.plot(betas, means, label=f"pos {border_pos}")
 
     plt.xlabel("$\\beta$")
     plt.ylabel("VOI")
