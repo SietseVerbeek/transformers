@@ -81,28 +81,31 @@ if __name__ == "__main__":
         border_pos = N - i
 
         for j, beta in enumerate(betas): 
-            src, tgt = gen_spin_model_batch(beta, 10, 50, grouping[None, ...])
+            var_of_info = np.empty(0, dtype=np.float64)
+            for _ in range(10):
+                src, tgt = gen_spin_model_batch(beta, 10, 50, grouping[None, ...])
 
-            batch_size = src.shape[0]
-            output = torch.zeros((batch_size, 1), dtype=torch.int64, device=device)
+                batch_size = src.shape[0]
+                output = torch.zeros((batch_size, 1), dtype=torch.int64, device=device)
 
-            for _ in range(N -1):
+                for _ in range(N -1):
 
-                src_mask, tgt_mask, src_padding_mask, tgt_padding_mask = create_mask(
-                    src, output, pad_idx=4, device=device
-                )
+                    src_mask, tgt_mask, src_padding_mask, tgt_padding_mask = create_mask(
+                        src, output, pad_idx=4, device=device
+                    )
 
-                logits = model(
-                    src,
-                    output,
-                    tgt_mask=tgt_mask,
-                )
+                    logits = model(
+                        src,
+                        output,
+                        tgt_mask=tgt_mask,
+                    )
 
-                idx = logits[:, -1].argmax(dim=-1).view(-1, 1)
-                output = torch.cat((output, idx), dim=-1)
+                    idx = logits[:, -1].argmax(dim=-1).view(-1, 1)
+                    output = torch.cat((output, idx), dim=-1)
 
-            fraction = (output == tgt).count_nonzero() / output.nelement()
-            var_of_info = batch_normalized_vi(output, tgt)
+                fraction = (output == tgt).count_nonzero() / output.nelement()
+                baap = batch_normalized_vi(output, tgt)
+                var_of_info = np.concat([baap, var_of_info])
 
             means[j] = var_of_info.mean()
             stds[j] = var_of_info.std()
