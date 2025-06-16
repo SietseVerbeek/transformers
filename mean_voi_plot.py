@@ -1,17 +1,18 @@
-import argparse
 import matplotlib.pyplot as plt
-from numba import njit
 import numpy as np
-import os
-
 import torch
+from numba import njit
 
-from models.PMATransformer import PMA_GroupingModel
-from pma import Config, _results_dir
-from utils.fs import load_checkpoint
-from utils.fwht import gen_spin_model_batch
 from utils.masking import create_mask
+from utils.pma import pma_from_config
+from utils.test_datasets import (
+    get_borders_betas,
+    get_dataset,
+    get_from_dict,
+    reduce_batch_size,
+)
 from utils.tests import normalized_vi
+
 
 @njit
 def normalized_vi_loop(arr1, arr2):
@@ -38,70 +39,60 @@ def batch_normalized_vi(results, truth):
 
     return normalized_vi_loop(results, truth)
 
+
 if __name__ == "__main__":
-
-
     N = 10
-    device = "cuda"
-    parser = argparse.ArgumentParser()
-    parser.add_argument("config", type=str)
+    beta_count = 20
+    samples = 1000
+    set_size = 50
 
-    args = parser.parse_args()
+    file = get_dataset(N, beta_count, samples, set_size)
 
-    c = Config(args.config)
-    model_file = _results_dir(f"model_{c.model_id}.params")
-    checkpoint_file = _results_dir(f"model_{c.model_id}__id_{c.train_id}.pth")
+    borders, betas = get_borders_betas(file)
 
-    if os.path.isfile(model_file):
-        model = PMA_GroupingModel.from_file(model_file).to(device)
-    else:
-        raise FileNotFoundError(f"model file with id {model_file} not found")
-
-    model, _, _, logs = load_checkpoint(checkpoint_file, model, None)
-
-    model.eval()
-
-    def labelings_one_border(length):
-        return np.array([[0] * (length - i) + [1] * i for i in range(length)])
-
-    groupings = labelings_one_border(N)
-
-    betas = np.linspace(.1, 1, 20, endpoint=True)
     means = np.empty_like(betas)
     stds = np.empty_like(betas)
 
-    
-    for i, beta in enumerate(betas): 
-        src, tgt = gen_spin_model_batch(0.5, 10, 50, groupings)
+    device = "cuda"
+    model, c, logs = pma_from_config(device)
 
-        batch_size = src.shape[0]
+    for i, beta in enumerate(betas):
+        var_of_info = np.empty(0, dtype=np.float64)
 
-        output = torch.zeros((batch_size, 1), dtype=torch.int64, device=device)
+        for border in borders:
+            src, tgt = get_from_dict(file, border, beta)
+            batches = reduce_batch_size(src, tgt, 10)
 
-        for _ in range(N -1):
+            for src, tgt in batches:
+                batch_size = src.shape[0]
+                src = torch.from_numpy(src).to(device)
+                tgt = torch.from_numpy(tgt).to(device)
 
-            src_mask, tgt_mask, src_padding_mask, tgt_padding_mask = create_mask(
-                src, output, pad_idx=4, device=device
-            )
+                output = torch.zeros((batch_size, 1), dtype=torch.int64, device=device)
 
-            logits = model(
-                src,
-                output,
-                tgt_mask=tgt_mask,
-            )
+                for _ in range(N - 1):
+                    src_mask, tgt_mask, src_padding_mask, tgt_padding_mask = (
+                        create_mask(src, output, pad_idx=4, device=device)
+                    )
 
-            idx = logits[:, -1].argmax(dim=-1).view(-1, 1)
-            output = torch.cat((output, idx), dim=-1)
+                    logits = model(
+                        src,
+                        output,
+                        tgt_mask=tgt_mask,
+                    )
 
-        fraction = (output == tgt).count_nonzero() / output.nelement()
-        var_of_info = batch_normalized_vi(output, tgt)
+                    idx = logits[:, -1].argmax(dim=-1).view(-1, 1)
+                    output = torch.cat((output, idx), dim=-1)
 
-        means[i] = var_of_info.mean()
-        stds[i] = var_of_info.std()
-        print('mean', var_of_info.mean())
-        print('std', var_of_info.std())
+                fraction = (output == tgt).count_nonzero() / output.nelement()
+                var_of_info = np.concat([var_of_info, batch_normalized_vi(output, tgt)])
+
+            means[i] = var_of_info.mean()
+            stds[i] = var_of_info.std()
+            print("mean", var_of_info.mean())
+            print("std", var_of_info.std())
     plt.errorbar(betas, means, yerr=stds)
-    plt.xlabel('$\\beta$')
-    plt.ylabel('VOI')
-    plt.title(f'trained at $\\beta = {c.train_beta_temps}$, sites permuted')
-    plt.savefig(f'results/pma/mean_voi_beta__{c.model_id}__{c.train_id}')
+    plt.xlabel("$\\beta$")
+    plt.ylabel("VOI")
+    plt.title(f"trained at $\\beta = {c.train_beta_temps}$, sites permuted")
+    plt.savefig(f"results/pma/mean_voi_beta__{c.model_id}__{c.train_id}")
