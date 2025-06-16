@@ -122,6 +122,8 @@ if __name__ == "__main__":
             # print('std', var_of_info.std())
         ax.errorbar(betas, means, yerr=stds)
         ax.set_title(f"border pos {border_pos}")
+        ax.set_xlabel("$\\beta$")
+        ax.set_ylabel("VOI")
         # Hide any unused subplots
     for j in range(i + 1, len(axes)):
         fig.delaxes(axes[j])  # Or: axes[j].axis('off')
