@@ -103,4 +103,5 @@ if __name__ == "__main__":
     plt.errorbar(betas, means, yerr=stds)
     plt.xlabel('$\\beta$')
     plt.ylabel('VOI')
-    plt.savefig('results/pma/mean_voi_beta')
+    plt.title(f'trained at $\\beta = {c.train_beta_temps}$, sites permuted')
+    plt.savefig(f'results/pma/mean_voi_beta__{c.model_id}__{c.train_id}')
