@@ -62,16 +62,13 @@ if __name__ == "__main__":
 
     model.eval()
 
-    def labelings_one_border(length):
-        return np.array([[0] * (length - i) + [1] * i for i in range(length)])
+    def permuted_labelings_one_border(length):
+        end = length // 2
+        return np.array([[0] * (end - i) + [1] * i for i in range(end)])
 
-    groupings = labelings_one_border(N)
+    groupings = permuted_labelings_one_border(N)
 
     betas = np.linspace(.1, 1, 20, endpoint=True)
-
-    n = len(groupings)
-    cols = 3  # Choose the number of columns (you can tweak this)
-    rows = math.ceil(n / cols)
 
     results_dict = {}
     
