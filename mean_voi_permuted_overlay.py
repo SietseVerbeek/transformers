@@ -73,6 +73,7 @@ if __name__ == "__main__":
     cols = 3  # Choose the number of columns (you can tweak this)
     rows = math.ceil(n / cols)
 
+    results_dict = {}
     
     for i, grouping in enumerate(groupings):
         means = np.empty_like(betas)
@@ -81,7 +82,7 @@ if __name__ == "__main__":
         community_size = N - i
 
         for j, beta in enumerate(betas): 
-            src, tgt = gen_spin_model_batch(beta, 10, 50, grouping[None, ...])
+            src, tgt = gen_spin_model_batch(beta, 200, 50, grouping[None, ...])
 
             perm = torch.stack(
                 [torch.randperm(src.size()[-1], device=device) for _ in range(src.size()[0])]
@@ -93,6 +94,8 @@ if __name__ == "__main__":
 
             batch_size = src.shape[0]
             output = torch.zeros((batch_size, 1), dtype=torch.int64, device=device)
+
+            dict_id = f"{community_size}_{beta:.2f}_"
 
             for _ in range(N -1):
 
@@ -112,12 +115,17 @@ if __name__ == "__main__":
             fraction = (output == tgt).count_nonzero() / output.nelement()
             var_of_info = batch_normalized_vi(output, tgt)
 
+            results_dict[dict_id + "vi"] = var_of_info
+            results_dict[dict_id + "tgt"] = tgt.cpu().numpy()
+            results_dict[dict_id + "output"] = output.cpu().numpy()
+
             means[j] = var_of_info.mean()
             stds[j] = var_of_info.std()
-        plt.plot(means, label=f"pos {community_size}")
+        plt.plot(betas, means, label=f"pos {community_size}")
 
     plt.xlabel("$\\beta$")
     plt.ylabel("VOI")
     plt.legend()
     plt.savefig(f'results/pma/mean_voi_beta_permuted_overlay__{c.model_id}__{c.train_id}')
+    np.savez(f'results/pma/mean_voi_permuted_data__{c.model_id}__{c.train_id}', **results_dict)
 
