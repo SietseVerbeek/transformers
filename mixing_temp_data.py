@@ -111,7 +111,7 @@ if __name__ == "__main__":
             tgt[..., 5:] = 1
 
             fraction = (output == tgt).count_nonzero() / output.nelement()
-            voi_s[i, j] = batch_normalized_vi(output, tgt)
+            voi_s[i, j] = batch_normalized_vi(output, tgt).mean()
 
     x, y = np.meshgrid(mu_arr, beta_arr)
 

@@ -1,7 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
-from numba import njit
 
 from utils.pma import pma_from_config
 from utils.test_datasets import (
@@ -10,34 +9,8 @@ from utils.test_datasets import (
     get_from_dict,
     reduce_batch_size,
 )
-from utils.tests import normalized_vi
+from utils.tests import batch_normalized_vi
 from utils.training import generate_predictions
-
-
-@njit
-def normalized_vi_loop(arr1, arr2):
-    num_clusterings = arr1.shape[0]
-    output = np.zeros(num_clusterings, dtype=np.float64)
-
-    for i in range(num_clusterings):
-        output[i] = normalized_vi(arr1[i], arr2[i])
-
-    return output
-
-
-def torch_check(input):
-    if isinstance(input, torch.Tensor):
-        if input.is_cuda:
-            return input.cpu().numpy()
-        return input.numpy()
-    return input
-
-
-def batch_normalized_vi(results, truth):
-    results = torch_check(results)
-    truth = torch_check(truth)
-
-    return normalized_vi_loop(results, truth)
 
 
 if __name__ == "__main__":

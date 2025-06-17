@@ -47,7 +47,7 @@ def gen(
         output = torch.cat((output, idx), dim=-1)
 
     fraction = (output == tgt).count_nonzero() / output.nelement()
-    var_of_info = batch_normalized_vi(output, tgt)
+    var_of_info = batch_normalized_vi(output, tgt).mean()
 
     return var_of_info, fraction
 

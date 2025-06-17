@@ -48,7 +48,7 @@ def normalized_vi_loop(arr1, arr2):
     for i in range(num_clusterings):
         output[i] = normalized_vi(arr1[i], arr2[i])
 
-    return output.mean()
+    return output
 
 
 def torch_check(input):
