@@ -95,6 +95,7 @@ def train(
             device=device,
         )
         logs["loss"].append(train_loss)
+        logs["samples_shown"] += num_batches * set_size
 
         print("training loss: ", train_loss)
         logs["logs"].append(f"training loss:  {train_loss}")
@@ -155,7 +156,7 @@ if __name__ == "__main__":
     model_file = _results_dir(f"model_{c.model_id}.params")
     checkpoint_file = _results_dir(f"model_{c.model_id}__id_{c.train_id}.pth")
 
-    logs = {"loss": [], "val_loss": [], "logs": []}
+    logs = {"loss": [], "val_loss": [], "logs": [], "samples_shown": 0}
 
     if os.path.isfile(model_file):
         print(f"Model loaded from file {model_file}")
