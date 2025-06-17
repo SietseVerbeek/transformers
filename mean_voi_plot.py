@@ -3,7 +3,6 @@ import numpy as np
 import torch
 from numba import njit
 
-from utils.masking import create_mask
 from utils.pma import pma_from_config
 from utils.test_datasets import (
     get_borders_betas,
@@ -12,6 +11,7 @@ from utils.test_datasets import (
     reduce_batch_size,
 )
 from utils.tests import normalized_vi
+from utils.training import generate_predictions
 
 
 @njit
@@ -41,7 +41,11 @@ def batch_normalized_vi(results, truth):
 
 
 if __name__ == "__main__":
-    N = 10
+    device = "cuda"
+    model, c, logs = pma_from_config(device)
+
+    N = c.N_sites
+
     beta_count = 20
     samples = 1000
     set_size = 50
@@ -53,9 +57,6 @@ if __name__ == "__main__":
     means = np.empty_like(betas)
     stds = np.empty_like(betas)
 
-    device = "cuda"
-    model, c, logs = pma_from_config(device)
-
     for i, beta in enumerate(betas):
         var_of_info = np.empty(0, dtype=np.float64)
 
@@ -64,25 +65,10 @@ if __name__ == "__main__":
             batches = reduce_batch_size(src, tgt, 10)
 
             for src, tgt in batches:
-                batch_size = src.shape[0]
                 src = torch.from_numpy(src).to(device)
                 tgt = torch.from_numpy(tgt).to(device)
 
-                output = torch.zeros((batch_size, 1), dtype=torch.int64, device=device)
-
-                for _ in range(N - 1):
-                    src_mask, tgt_mask, src_padding_mask, tgt_padding_mask = (
-                        create_mask(src, output, pad_idx=4, device=device)
-                    )
-
-                    logits = model(
-                        src,
-                        output,
-                        tgt_mask=tgt_mask,
-                    )
-
-                    idx = logits[:, -1].argmax(dim=-1).view(-1, 1)
-                    output = torch.cat((output, idx), dim=-1)
+                output = generate_predictions(model, src, device)
 
                 fraction = (output == tgt).count_nonzero() / output.nelement()
                 var_of_info = np.concat([var_of_info, batch_normalized_vi(output, tgt)])
