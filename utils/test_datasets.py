@@ -37,13 +37,13 @@ def reduce_batch_size(src, tgt, size):
 
 def get_dataset(N: int, beta_count: int, samples: int, set_size: int):
     file = np.load(
-        f"results/pma/dataset__N_{N}__beta_{beta_count}__set_50__samples_{samples}.npz"
+        f"data/pma/dataset__N_{N}__beta_{beta_count}__set_50__samples_{samples}.npz"
     )
     return file
 
 
 def get_permuted_dataset(N: int, beta_count: int, samples: int, set_size: int):
     file = np.load(
-        f"results/pma/dataset_permuted__N_{N}__beta_{beta_count}__set_50__samples_{samples}.npz"
+        f"data/pma/dataset_permuted__N_{N}__beta_{beta_count}__set_50__samples_{samples}.npz"
     )
     return file
