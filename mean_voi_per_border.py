@@ -67,5 +67,8 @@ if __name__ == "__main__":
     for j in range(i + 1, len(axes)):
         fig.delaxes(axes[j])  # Or: axes[j].axis('off')
 
+    fig.suptitle(
+        f"ds:{N, beta_count, samples, set_size}, shown: {logs["samples_shown"]} $\\beta$ {c.train_beta_temps}"
+    )
     plt.tight_layout()
     plt.savefig(f"results/pma/mean_voi_beta_border_pos__{c.model_id}__{c.train_id}")

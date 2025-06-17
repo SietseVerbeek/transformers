@@ -50,6 +50,9 @@ if __name__ == "__main__":
     plt.xlabel("$\\beta$")
     plt.ylabel("VOI")
     plt.legend()
+    plt.title(
+        f"ds:{N, beta_count, samples, set_size}, shown: {logs["samples_shown"]} $\\beta$ {c.train_beta_temps}"
+    )
     plt.savefig(
         f"results/pma/mean_voi_beta_permuted_overlay__{c.model_id}__{c.train_id}"
     )

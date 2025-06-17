@@ -53,6 +53,6 @@ if __name__ == "__main__":
     plt.ylabel("VOI")
     plt.legend()
     plt.title(
-        f"$\\beta$ train = {c.train_beta_temps}, samples shown {logs["samples_shown"]}"
+        f"ds:{N, beta_count, samples, set_size}, shown: {logs["samples_shown"]} $\\beta$ {c.train_beta_temps}"
     )
     plt.savefig(f"results/pma/mean_voi_beta_border_overlay__{c.model_id}__{c.train_id}")
