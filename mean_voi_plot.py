@@ -51,11 +51,11 @@ if __name__ == "__main__":
                 var_of_info = np.concat([var_of_info, batch_normalized_vi(output, tgt)])
                 nmi = np.concat([nmi, batch_normalized_mi(output, tgt)])
 
-            mean_vi[i] = var_of_info.mean()
-            stds_vi[i] = var_of_info.std()
+        mean_vi[i] = var_of_info.mean()
+        stds_vi[i] = var_of_info.std()
 
-            mean_nmi[i] = nmi.mean()
-            stds_nmi[i] = nmi.std()
+        mean_nmi[i] = nmi.mean()
+        stds_nmi[i] = nmi.std()
 
 
     plt.errorbar(betas, mean_vi, yerr=stds_vi)
