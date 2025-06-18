@@ -75,6 +75,8 @@ normalized_vi_loop(l1, l2)
 
 
 def batch_normalized_mi(results, truth):
+    results = torch_check(results)
+    truth = torch_check(truth)
 
     nmi_list = [
         normalized_mutual_info_score(c1, c2)
