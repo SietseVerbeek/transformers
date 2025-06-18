@@ -9,7 +9,7 @@ from utils.test_datasets import (
     get_from_dict,
     reduce_batch_size,
 )
-from utils.tests import batch_normalized_vi
+from utils.tests import batch_normalized_mi, batch_normalized_vi
 from utils.training import generate_predictions
 
 
@@ -27,11 +27,15 @@ if __name__ == "__main__":
 
     borders, betas = get_borders_betas(file)
 
-    means = np.empty_like(betas)
-    stds = np.empty_like(betas)
+    mean_vi = np.empty_like(betas)
+    stds_vi = np.empty_like(betas)
+
+    mean_nmi = np.empty_like(betas)
+    stds_nmi = np.empty_like(betas)
 
     for i, beta in enumerate(betas):
         var_of_info = np.empty(0, dtype=np.float64)
+        nmi = np.empty(0, dtype=np.float64)
 
         for border in borders:
             src, tgt = get_from_dict(file, border, beta)
@@ -45,15 +49,28 @@ if __name__ == "__main__":
 
                 fraction = (output == tgt).count_nonzero() / output.nelement()
                 var_of_info = np.concat([var_of_info, batch_normalized_vi(output, tgt)])
+                nmi = np.concat([nmi, batch_normalized_mi(output, tgt)])
 
-            means[i] = var_of_info.mean()
-            stds[i] = var_of_info.std()
-            print("mean", var_of_info.mean())
-            print("std", var_of_info.std())
-    plt.errorbar(betas, means, yerr=stds)
+            mean_vi[i] = var_of_info.mean()
+            stds_vi[i] = var_of_info.std()
+
+            mean_nmi[i] = nmi.mean()
+            stds_nmi[i] = nmi.std()
+
+
+    plt.errorbar(betas, mean_vi, yerr=stds_vi)
     plt.xlabel("$\\beta$")
     plt.ylabel("VOI")
     plt.title(
         f"ds:{N, beta_count, samples, set_size}, shown: {logs["samples_shown"]} $\\beta$ {c.train_beta_temps}"
     )
     plt.savefig(f"results/pma/mean_voi_beta__{c.model_id}__{c.train_id}")
+    plt.clf()
+
+    plt.errorbar(betas, mean_nmi, yerr=stds_nmi)
+    plt.xlabel("$\\beta$")
+    plt.ylabel("NMI")
+    plt.title(
+        f"ds:{N, beta_count, samples, set_size}, shown: {logs["samples_shown"]} $\\beta$ {c.train_beta_temps}"
+    )
+    plt.savefig(f"results/pma/mean_nmi_beta__{c.model_id}__{c.train_id}")

@@ -4,6 +4,7 @@ import numpy as np
 import numpy.typing as npt
 from numba import njit
 import torch
+from sklearn.metrics import normalized_mutual_info_score
 
 
 @njit
@@ -71,6 +72,16 @@ l1 = np.array([[0, 0], [0, 1]])
 l2 = np.array([[0, 1], [0, 1]])
 
 normalized_vi_loop(l1, l2)
+
+
+def batch_normalized_mi(results, truth):
+
+    nmi_list = [
+        normalized_mutual_info_score(c1, c2)
+        for c1, c2 in zip(results, truth)
+    ]
+
+    return np.array(nmi_list, dtype=np.float64)
 
 if __name__ == "__main__":
 
