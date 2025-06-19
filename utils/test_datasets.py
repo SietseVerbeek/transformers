@@ -16,8 +16,11 @@ def get_borders_betas(file):
     return borders, betas
 
 
+def key_from_border_beta(border, beta):
+    return f"{border}_{beta:.2f}_"
+
 def get_from_dict(file, border, beta):
-    key = f"{border}_{beta:.2f}_"
+    key = key_from_border_beta(border, beta)
     tgt = file[key + "tgt"]
     src = file[key + "src"]
 
