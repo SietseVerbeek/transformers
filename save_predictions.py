@@ -34,11 +34,11 @@ if __name__ == "__main__":
     for border in borders:
         for beta in betas:
             start = perf_counter()
-            src, tgt = get_from_dict(file, border, beta)
+            src, tgt_full = get_from_dict(file, border, beta)
             key_prefix = key_from_border_beta(border, beta)
-            save_dict[key_prefix + "tgt"] = tgt.copy()
+            save_dict[key_prefix + "tgt"] = tgt_full
 
-            batches = reduce_batch_size(src, tgt, 200)
+            batches = reduce_batch_size(src, tgt_full, 200)
             stack = []
 
             for src, tgt in batches:
@@ -50,8 +50,8 @@ if __name__ == "__main__":
                 stack.append(generate_predictions(model, src, device).cpu().numpy())
 
             output = np.concatenate(stack, axis=0)
-            voi = batch_normalized_vi(output, tgt)
-            nmi = batch_normalized_mi(output, tgt)
+            voi = batch_normalized_vi(output, tgt_full)
+            nmi = batch_normalized_mi(output, tgt_full)
 
             save_dict[key_prefix + "out"] = output
             save_dict[key_prefix + "voi"] = voi
