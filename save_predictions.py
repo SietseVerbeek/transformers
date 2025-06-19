@@ -39,7 +39,7 @@ if __name__ == "__main__":
             save_dict[key_prefix + "tgt"] = tgt.copy()
 
             batches = reduce_batch_size(src, tgt, 200)
-            output = torch.empty(0, dtype=torch.int8, device=device)
+            stack = []
 
             for src, tgt in batches:
                 src = torch.from_numpy(src).pin_memory()
@@ -47,9 +47,9 @@ if __name__ == "__main__":
                 tgt = torch.from_numpy(tgt).pin_memory()
                 tgt = tgt.to(device, non_blocking=True)
 
-                output = torch.cat([output, generate_predictions(model, src, device)])
+                stack.append(generate_predictions(model, src, device).cpu().numpy())
 
-            output = output.cpu().numpy()
+            output = np.concatenate(stack, axis=0)
             voi = batch_normalized_vi(output, tgt)
             nmi = batch_normalized_mi(output, tgt)
 
