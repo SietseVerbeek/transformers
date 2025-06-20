@@ -10,6 +10,7 @@ from utils.test_datasets import (
     get_dataset,
     src_tgt_from_dict,
     reduce_batch_size,
+    voi_nmi_from_dict,
 )
 from utils.tests import batch_normalized_mi, batch_normalized_vi
 from utils.training import generate_predictions
@@ -50,26 +51,13 @@ if __name__ == "__main__":
         ax_nmi = axes_vi[i]
 
         for j, beta in enumerate(betas):
-            src, tgt = src_tgt_from_dict(file, border, beta)
-            batches = reduce_batch_size(src, tgt, 10)
-            var_of_info = np.empty(0, dtype=np.float64)
-            nmi = np.empty(0, dtype=np.float64)
-
-            for src, tgt in batches:
-                src = torch.from_numpy(src).to(device)
-                tgt = torch.from_numpy(tgt).to(device)
-
-                output = generate_predictions(model, src, device)
-
-                fraction = (output == tgt).count_nonzero() / output.nelement()
-                var_of_info = np.concat([var_of_info, batch_normalized_vi(output, tgt)])
-                nmi = np.concat([nmi, batch_normalized_mi(output, tgt)])
+            var_of_info, nmi = voi_nmi_from_dict(file)
 
             mean_vi[j] = var_of_info.mean()
             stds_vi[j] = var_of_info.std()
 
-            mean_nmi[j] = var_of_info.mean()
-            stds_nmi[j] = var_of_info.std()
+            mean_nmi[j] = nmi.mean()
+            stds_nmi[j] = nmi.std()
 
         ax_vi.errorbar(betas, mean_vi, yerr=stds_vi)
         ax_vi.set_title(f"border pos {border}")

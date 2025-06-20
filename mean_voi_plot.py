@@ -8,6 +8,7 @@ from utils.test_datasets import (
     get_dataset,
     src_tgt_from_dict,
     reduce_batch_size,
+    voi_nmi_from_dict,
 )
 from utils.tests import batch_normalized_mi, batch_normalized_vi
 from utils.training import generate_predictions
@@ -23,7 +24,9 @@ if __name__ == "__main__":
     samples = 1000
     set_size = 50
 
-    file = get_dataset(N, beta_count, samples, set_size)
+    file = np.load(
+        f"results/pma/predictions/dataset__N_{N}__beta_{beta_count}__set_50__samples_{samples}__{c.model_id}__{c.train_id}.npz"
+    )
 
     borders, betas = get_borders_betas(file)
 
@@ -38,18 +41,10 @@ if __name__ == "__main__":
         nmi = np.empty(0, dtype=np.float64)
 
         for border in borders:
-            src, tgt = src_tgt_from_dict(file, border, beta)
-            batches = reduce_batch_size(src, tgt, 10)
+            voi_temp, nmi_temp = voi_nmi_from_dict(file, border, beta)
 
-            for src, tgt in batches:
-                src = torch.from_numpy(src).to(device)
-                tgt = torch.from_numpy(tgt).to(device)
-
-                output = generate_predictions(model, src, device)
-
-                fraction = (output == tgt).count_nonzero() / output.nelement()
-                var_of_info = np.concat([var_of_info, batch_normalized_vi(output, tgt)])
-                nmi = np.concat([nmi, batch_normalized_mi(output, tgt)])
+            var_of_info = np.concat([var_of_info, voi_temp])
+            nmi = np.concat([nmi, nmi_temp])
 
         mean_vi[i] = var_of_info.mean()
         stds_vi[i] = var_of_info.std()
