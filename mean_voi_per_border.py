@@ -8,7 +8,7 @@ from utils.pma import pma_from_config
 from utils.test_datasets import (
     get_borders_betas,
     get_dataset,
-    get_from_dict,
+    src_tgt_from_dict,
     reduce_batch_size,
 )
 from utils.tests import batch_normalized_mi, batch_normalized_vi
@@ -20,7 +20,6 @@ if __name__ == "__main__":
     model, c, logs = pma_from_config(device)
 
     N = c.N_sites
-
     beta_count = 20
     samples = 1000
     set_size = 50
@@ -51,12 +50,12 @@ if __name__ == "__main__":
         ax_nmi = axes_vi[i]
 
         for j, beta in enumerate(betas):
-            src, tgt = get_from_dict(file, border, beta)
+            src, tgt = src_tgt_from_dict(file, border, beta)
             batches = reduce_batch_size(src, tgt, 10)
             var_of_info = np.empty(0, dtype=np.float64)
             nmi = np.empty(0, dtype=np.float64)
 
-            for src, tgt in batches[:3]:
+            for src, tgt in batches:
                 src = torch.from_numpy(src).to(device)
                 tgt = torch.from_numpy(tgt).to(device)
 

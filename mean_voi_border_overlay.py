@@ -1,16 +1,11 @@
 import matplotlib.pyplot as plt
 import numpy as np
-import torch
 
 from utils.pma import pma_from_config
 from utils.test_datasets import (
     get_borders_betas,
-    get_dataset,
-    get_from_dict,
-    reduce_batch_size,
+    voi_nmi_from_dict,
 )
-from utils.tests import batch_normalized_mi, batch_normalized_vi
-from utils.training import generate_predictions
 
 
 if __name__ == "__main__":
@@ -23,7 +18,9 @@ if __name__ == "__main__":
     samples = 1000
     set_size = 50
 
-    file = get_dataset(N, beta_count, samples, set_size)
+    file = np.load(
+        f"results/pma/predictions/dataset__N_{N}__beta_{beta_count}__set_50__samples_{samples}__{c.model_id}__{c.train_id}.npz"
+    )
 
     borders, betas = get_borders_betas(file)
 
@@ -38,26 +35,13 @@ if __name__ == "__main__":
         stds_nmi = np.empty_like(betas)
 
         for j, beta in enumerate(betas):
-            var_of_info = np.empty(0, dtype=np.float64)
-            nmi = np.empty(0, dtype=np.float64)
-            src, tgt = get_from_dict(file, border, beta)
-            batches = reduce_batch_size(src, tgt, 10)
+            voi, nmi = voi_nmi_from_dict(file, border, beta)
 
-            for src, tgt in batches:
-                src = torch.from_numpy(src).to(device)
-                tgt = torch.from_numpy(tgt).to(device)
+            mean_vi[j] = voi.mean()
+            stds_vi[j] = voi.std()
 
-                output = generate_predictions(model, src, device)
-
-                fraction = (output == tgt).count_nonzero() / output.nelement()
-                var_of_info = np.concat([var_of_info, batch_normalized_vi(output, tgt)])
-                nmi = np.concat([nmi, batch_normalized_mi(output, tgt)])
-
-            mean_vi[j] = var_of_info.mean()
-            stds_vi[j] = var_of_info.std()
-
-            mean_nmi[j] = var_of_info.mean()
-            stds_nmi[j] = var_of_info.std()
+            mean_nmi[j] = nmi.mean()
+            stds_nmi[j] = nmi.std()
 
         axes_vi.plot(betas, mean_vi, label=f"pos {border}")
         axes_nmi.plot(betas, mean_nmi, label=f"pos {border}")
@@ -68,7 +52,9 @@ if __name__ == "__main__":
     axes_vi.set_title(
         f"ds:{N, beta_count, samples, set_size}, shown: {logs["samples_shown"]} $\\beta$ {c.train_beta_temps}"
     )
-    fig_vi.savefig(f"results/pma/mean_voi_beta_border_overlay__{c.model_id}__{c.train_id}")
+    fig_vi.savefig(
+        f"results/pma/mean_voi_beta_border_overlay__{c.model_id}__{c.train_id}"
+    )
 
     axes_nmi.set_xlabel("$\\beta$")
     axes_nmi.set_ylabel("NMI")
@@ -76,4 +62,6 @@ if __name__ == "__main__":
     axes_nmi.set_title(
         f"ds:{N, beta_count, samples, set_size}, shown: {logs["samples_shown"]} $\\beta$ {c.train_beta_temps}"
     )
-    fig_nmi.savefig(f"results/pma/mean_nmi_beta_border_overlay__{c.model_id}__{c.train_id}")
+    fig_nmi.savefig(
+        f"results/pma/mean_nmi_beta_border_overlay__{c.model_id}__{c.train_id}"
+    )

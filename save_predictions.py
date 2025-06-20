@@ -8,7 +8,7 @@ from utils.pma import pma_from_config
 from utils.test_datasets import (
     get_borders_betas,
     get_dataset,
-    get_from_dict,
+    src_tgt_from_dict,
     key_from_border_beta,
     reduce_batch_size,
 )
@@ -34,7 +34,7 @@ if __name__ == "__main__":
     for border in borders:
         for beta in betas:
             start = perf_counter()
-            src, tgt_full = get_from_dict(file, border, beta)
+            src, tgt_full = src_tgt_from_dict(file, border, beta)
             key_prefix = key_from_border_beta(border, beta)
             save_dict[key_prefix + "tgt"] = tgt_full
 

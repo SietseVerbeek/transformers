@@ -6,7 +6,7 @@ from utils.pma import many_pma_from_config, pma_from_config
 from utils.test_datasets import (
     get_borders_betas,
     get_dataset,
-    get_from_dict,
+    src_tgt_from_dict,
     reduce_batch_size,
 )
 from utils.tests import batch_normalized_mi, batch_normalized_vi
@@ -42,7 +42,7 @@ if __name__ == "__main__":
             nmi = np.empty(0, dtype=np.float64)
 
             for border in borders:
-                src, tgt = get_from_dict(file, border, beta)
+                src, tgt = src_tgt_from_dict(file, border, beta)
                 batches = reduce_batch_size(src, tgt, 10)
 
                 for src, tgt in batches:
