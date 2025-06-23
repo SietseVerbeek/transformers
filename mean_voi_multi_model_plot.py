@@ -16,8 +16,8 @@ if __name__ == "__main__":
     samples = 1000
     set_size = 50
 
-    fig_vi, ax_vi = plt.subplots()
-    fig_nmi, ax_nmi = plt.subplots()
+    fig_vi, ax_vi = plt.subplots(1, 2)
+    fig_nmi, ax_nmi = plt.subplots(1, 2)
 
     for model, c, logs in zip(models, c_list, logs_list):
         file = np.load(
@@ -47,13 +47,21 @@ if __name__ == "__main__":
             mean_nmi[i] = nmi.mean()
             stds_nmi[i] = nmi.std()
 
-        ax_vi.plot(betas, mean_vi)
-        ax_vi.set_xlabel("$\\beta$")
-        ax_vi.set_ylabel("VOI")
+        ax_vi[0].plot(betas, mean_vi)
+        ax_vi[0].set_xlabel("$\\beta$")
+        ax_vi[0].set_ylabel("VOI")
 
-        ax_nmi.plot(betas, mean_nmi)
-        ax_nmi.set_xlabel("$\\beta$")
-        ax_nmi.set_ylabel("NMI")
+        ax_vi[1].plot(betas, stds_vi)
+        ax_vi[1].set_xlabel("$\\beta$")
+        ax_vi[1].set_ylabel("std VOI")
+
+        ax_nmi[0].plot(betas, mean_nmi)
+        ax_nmi[0].set_xlabel("$\\beta$")
+        ax_nmi[0].set_ylabel("NMI")
+
+        ax_nmi[1].plot(betas, stds_nmi)
+        ax_nmi[1].set_xlabel("$\\beta$")
+        ax_nmi[1].set_ylabel("std NMI")
 
     fig_vi.suptitle(
         f"ds:{N, beta_count, samples, set_size} $\\beta$ {c_list[0].train_beta_temps}"
