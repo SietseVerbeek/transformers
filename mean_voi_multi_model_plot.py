@@ -11,6 +11,7 @@ if __name__ == "__main__":
     device = "cuda"
     models, c_list, logs_list = many_pma_from_config(device)
 
+    N = c_list[0].N_sites
     beta_count = 20
     samples = 1000
     set_size = 50
@@ -19,7 +20,6 @@ if __name__ == "__main__":
     fig_nmi, ax_nmi = plt.subplots()
 
     for model, c, logs in zip(models, c_list, logs_list):
-        N = c.N_sites
         file = np.load(
             f"results/pma/predictions/dataset__N_{N}__beta_{beta_count}__set_50__samples_{samples}__{c.model_id}__{c.train_id}.npz"
         )
@@ -58,9 +58,9 @@ if __name__ == "__main__":
     fig_vi.suptitle(
         f"ds:{N, beta_count, samples, set_size} $\\beta$ {c_list[0].train_beta_temps}"
     )
-    fig_vi.savefig("results/pma/mean_voi_beta_multi_model")
+    fig_vi.savefig(f"results/pma/mean_voi_beta_multi_model__beta_{c_list[0].train_beta_temps}")
 
     fig_nmi.suptitle(
         f"ds:{N, beta_count, samples, set_size} $\\beta$ {c_list[0].train_beta_temps}"
     )
-    fig_nmi.savefig("results/pma/mean_nmi_beta_multi_model")
+    fig_nmi.savefig(f"results/pma/mean_nmi_beta_multi_model__beta_{c_list[0].train_beta_temps}")
