@@ -66,9 +66,9 @@ if __name__ == "__main__":
     fig_vi.suptitle(
         f"ds:{N, beta_count, samples, set_size} $\\beta$ {c_list[0].train_beta_temps}"
     )
-    fig_vi.savefig(f"results/pma/mean_voi_beta_multi_model__beta_{c_list[0].train_beta_temps}")
+    fig_vi.savefig(f"results/pma/mean_voi_beta_multi_model__beta_{c_list[0].train_beta_temps}.png")
 
     fig_nmi.suptitle(
         f"ds:{N, beta_count, samples, set_size} $\\beta$ {c_list[0].train_beta_temps}"
     )
-    fig_nmi.savefig(f"results/pma/mean_nmi_beta_multi_model__beta_{c_list[0].train_beta_temps}")
+    fig_nmi.savefig(f"results/pma/mean_nmi_beta_multi_model__beta_{c_list[0].train_beta_temps}.png")
