@@ -45,6 +45,6 @@ if __name__ == "__main__":
 
     Path("data/pma").mkdir(parents=True, exist_ok=True)
     np.savez(
-        f"data/pma/dataset_permuted__N_{N}__beta_{beta_count}__set_50__samples_{samples}",
+        f"data/pma/dataset_permuted__N_{N}__beta_{beta_count}__set_{set_size}__samples_{samples}",
         **data_dict,
     )

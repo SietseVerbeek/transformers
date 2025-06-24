@@ -32,4 +32,4 @@ if __name__ == "__main__":
             data_dict[dict_id + "tgt"] = tgt.numpy()
 
     Path("data/pma").mkdir(parents=True, exist_ok=True)
-    np.savez(f"data/pma/dataset__N_{N}__beta_{beta_count}__set_50__samples_{samples}", **data_dict)
+    np.savez(f"data/pma/dataset__N_{N}__beta_{beta_count}__set_{set_size}__samples_{samples}", **data_dict)
