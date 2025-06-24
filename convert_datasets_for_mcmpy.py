@@ -30,7 +30,10 @@ if __name__ == "__main__":
 
         split = file.stem.split("_")
         N, dat_dir = get_dat_dir(split, "permuted" in split)
-        Path(dat_dir).mkdir(parents=True, exist_ok=True)
+        try:
+            Path(dat_dir).mkdir(parents=True)
+        except FileExistsError:
+            continue
 
         np_file = np.load(file)
         borders, betas = get_borders_betas(np_file)
