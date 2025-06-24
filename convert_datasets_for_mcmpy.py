@@ -42,8 +42,6 @@ if __name__ == "__main__":
                 for s, t in zip(src, tgt):
 
                     border_pos = np.argmax(t)
-                    border_pos = N if border_pos == 0 else border_pos
 
-                    print(f"{border_pos}_{beta:.2f}_{i}.dat")
                     i += 1
                     save_configurations(s, dat_dir + f"{border_pos}_{beta:.2f}_{i}.dat")
