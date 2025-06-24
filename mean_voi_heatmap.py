@@ -56,16 +56,22 @@ if __name__ == "__main__":
             mean_nmi_grid[z, i] = nmi.mean()
             nmi_std_grid[z, i] = nmi.std()
 
-    vi_cmesh = ax_vi.pcolormesh(beta_train, betas, mean_voi_grid)
+    vi_cmesh = ax_vi.pcolormesh(beta_train, betas, mean_voi_grid.T, shading="auto")
     fig_vi.colorbar(vi_cmesh, ax=ax_vi)
+    ax_vi.invert_yaxis()
+    ax_vi.set_ylabel("$\\beta$")
+    ax_vi.set_xlabel("training $\\beta$")
     fig_vi.suptitle(
-        f"ds:{N, beta_count, samples, set_size} $\\beta$ {c_list[0].train_beta_temps}"
+        f"ds:{N, beta_count, samples, set_size}"
     )
     fig_vi.savefig("results/pma/mean_voi_heatmap")
 
-    nmi_cmesh = ax_vi.pcolormesh(beta_train, betas, mean_voi_grid)
+    nmi_cmesh = ax_nmi.pcolormesh(beta_train, betas, mean_nmi_grid.T, shading="auto")
+    ax_nmi.invert_yaxis()
+    ax_nmi.set_ylabel("$\\beta$")
+    ax_nmi.set_xlabel("training $\\beta$")
     fig_nmi.colorbar(nmi_cmesh, ax=ax_nmi)
     fig_nmi.suptitle(
-        f"ds:{N, beta_count, samples, set_size} $\\beta$ {c_list[0].train_beta_temps}"
+        f"ds:{N, beta_count, samples, set_size}"
     )
     fig_nmi.savefig("results/pma/mean_nmi_heatmap")
