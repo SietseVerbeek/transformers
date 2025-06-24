@@ -11,19 +11,19 @@ def get_dat_dir(split, is_permuted):
         beta_count = split[7]
         set_size = split[10]
         samples = split[13]
-        return N, f"data/pma/mcmpy/dataset_permuted__N_{N}__beta_{beta_count}__set_{set_size}__samples_{samples}/"
+        return N, f"data/mcmpy/dataset_permuted__N_{N}__beta_{beta_count}__set_{set_size}__samples_{samples}/"
 
     N = split[3]
     beta_count = split[6]
     set_size = split[9]
     samples = split[12]
 
-    return N, f"data/pma/mcmpy/dataset__N_{N}__beta_{beta_count}__set_{set_size}__samples_{samples}/"
+    return N, f"data/mcmpy/dataset__N_{N}__beta_{beta_count}__set_{set_size}__samples_{samples}/"
 
 if __name__ == "__main__":
 
     data_dir = Path("data/pma")
-    mcmpy_dir = data_dir / "mcmpy"
+    mcmpy_dir = Path("data/mcmpy")
     mcmpy_dir.mkdir(parents=True, exist_ok=True)
 
     for file in data_dir.glob("*.npz"):
