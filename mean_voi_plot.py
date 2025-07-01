@@ -25,7 +25,7 @@ if __name__ == "__main__":
     set_size = 50
 
     file = np.load(
-        f"results/pma/predictions/dataset__N_{N}__beta_{beta_count}__set_50__samples_{samples}__{c.model_id}__{c.train_id}.npz"
+        f"results/pma/predictions/dataset__N_{N}__beta_{beta_count}__set_{set_size}__samples_{samples}__{c.model_id}__{c.train_id}.npz"
     )
 
     borders, betas = get_borders_betas(file)

@@ -29,7 +29,7 @@ if __name__ == "__main__":
 
     for z, (model, c, logs) in enumerate(zip(models, c_list, logs_list)):
         file = np.load(
-            f"results/pma/predictions/dataset__N_{N}__beta_{beta_count}__set_50__samples_{samples}__{c.model_id}__{c.train_id}.npz"
+            f"results/pma/predictions/dataset__N_{N}__beta_{beta_count}__set_{set_size}__samples_{samples}__{c.model_id}__{c.train_id}.npz"
         )
 
         borders, betas = get_borders_betas(file)
@@ -94,4 +94,4 @@ if __name__ == "__main__":
     fig_nmi.suptitle(
         f"ds:{N, beta_count, samples, set_size}"
     )
-    fig_nmi.savefig("results/pma/mean_nmi_heatmap")
+    fig_nmi.savefig(f"results/pma/mean_nmi_heatmap__N_{N}__beta_{beta_count}__set_{set_size}__samples_{samples}")

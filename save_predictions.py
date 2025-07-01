@@ -60,6 +60,6 @@ if __name__ == "__main__":
 
     Path("results/pma/predictions/").mkdir(parents=True, exist_ok=True)
     np.savez(
-        f"results/pma/predictions/dataset__N_{N}__beta_{beta_count}__set_50__samples_{samples}__{c.model_id}__{c.train_id}",
+        f"results/pma/predictions/dataset__N_{N}__beta_{beta_count}__set_{set_size}__samples_{samples}__{c.model_id}__{c.train_id}",
         **save_dict
     )
