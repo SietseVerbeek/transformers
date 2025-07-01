@@ -11,7 +11,7 @@ if __name__ == "__main__":
     device = "cuda"
     models, c_list, logs_list = many_pma_from_config(device)
 
-    N = c_list[0].N_sites
+    N = 10
     beta_count = 20
     samples = 1000
     set_size = 50
@@ -24,8 +24,8 @@ if __name__ == "__main__":
 
     beta_train = np.zeros((len(c_list)))
 
-    fig_vi, ax_vi = plt.subplots()
-    fig_nmi, ax_nmi = plt.subplots()
+    fig_vi, ax_vi = plt.subplots(1, 2)
+    fig_nmi, ax_nmi = plt.subplots(1, 2)
 
     for z, (model, c, logs) in enumerate(zip(models, c_list, logs_list)):
         file = np.load(
@@ -56,21 +56,41 @@ if __name__ == "__main__":
             mean_nmi_grid[z, i] = nmi.mean()
             nmi_std_grid[z, i] = nmi.std()
 
-    vi_cmesh = ax_vi.pcolormesh(beta_train, betas, mean_voi_grid.T, shading="auto")
-    fig_vi.colorbar(vi_cmesh, ax=ax_vi)
-    ax_vi.invert_yaxis()
-    ax_vi.set_ylabel("$\\beta$")
-    ax_vi.set_xlabel("training $\\beta$")
+    vi_cmesh = ax_vi[0].pcolormesh(beta_train, betas, mean_voi_grid.T, shading="auto")
+    vi_std_cmesh = ax_vi[1].pcolormesh(beta_train, betas, voi_std_grid.T, shading="auto")
+
+    fig_vi.colorbar(vi_cmesh, ax=ax_vi[0])
+    fig_vi.colorbar(vi_std_cmesh, ax=ax_vi[1])
+
+    ax_vi[0].invert_yaxis()
+    ax_vi[1].invert_yaxis()
+
+    ax_vi[0].set_ylabel("$\\beta$")
+    ax_vi[0].set_xlabel("training $\\beta$")
+
+    ax_vi[1].set_ylabel("$\\beta$")
+    ax_vi[1].set_xlabel("training $\\beta$")
+
     fig_vi.suptitle(
         f"ds:{N, beta_count, samples, set_size}"
     )
     fig_vi.savefig("results/pma/mean_voi_heatmap")
 
-    nmi_cmesh = ax_nmi.pcolormesh(beta_train, betas, mean_nmi_grid.T, shading="auto")
-    ax_nmi.invert_yaxis()
-    ax_nmi.set_ylabel("$\\beta$")
-    ax_nmi.set_xlabel("training $\\beta$")
-    fig_nmi.colorbar(nmi_cmesh, ax=ax_nmi)
+    nmi_cmesh = ax_nmi[0].pcolormesh(beta_train, betas, mean_nmi_grid.T, shading="auto")
+    nmi_std_cmesh = ax_nmi[1].pcolormesh(beta_train, betas, nmi_std_grid.T, shading="auto")
+
+    ax_nmi[0].invert_yaxis()
+    ax_nmi[1].invert_yaxis()
+
+    ax_nmi[0].set_ylabel("$\\beta$")
+    ax_nmi[0].set_xlabel("training $\\beta$")
+
+    ax_nmi[1].set_ylabel("$\\beta$")
+    ax_nmi[1].set_xlabel("training $\\beta$")
+
+    fig_nmi.colorbar(nmi_cmesh, ax=ax_nmi[0])
+    fig_nmi.colorbar(nmi_std_cmesh, ax=ax_nmi[1])
+
     fig_nmi.suptitle(
         f"ds:{N, beta_count, samples, set_size}"
     )
