@@ -32,9 +32,11 @@ if __name__ == "__main__":
 
     mean_vi = np.empty_like(betas)
     stds_vi = np.empty_like(betas)
+    con_vi = np.empty((len(betas), 2))
 
     mean_nmi = np.empty_like(betas)
     stds_nmi = np.empty_like(betas)
+    con_nmi = np.empty((len(betas), 2))
 
     for i, beta in enumerate(betas):
         var_of_info = np.empty(0, dtype=np.float64)
@@ -48,14 +50,17 @@ if __name__ == "__main__":
 
         mean_vi[i] = var_of_info.mean()
         stds_vi[i] = var_of_info.std()
+        con_vi[i] = np.percentile(var_of_info, [2.5, 97.5])
 
         mean_nmi[i] = nmi.mean()
         stds_nmi[i] = nmi.std()
+        con_nmi[i] = np.percentile(nmi, [2.5, 97.5])
 
 
     plt.errorbar(betas, mean_vi, yerr=stds_vi)
     plt.xlabel("$\\beta$")
     plt.ylabel("VOI")
+    plt.fill_between(betas, con_vi[:, 0], con_vi[:, 1], alpha=0.2)
     plt.title(
         f"ds:{N, beta_count, samples, set_size}, shown: {logs["samples_shown"]} $\\beta$ {c.train_beta_temps}"
     )
@@ -65,6 +70,7 @@ if __name__ == "__main__":
     plt.errorbar(betas, mean_nmi, yerr=stds_nmi)
     plt.xlabel("$\\beta$")
     plt.ylabel("NMI")
+    plt.fill_between(betas, con_nmi[:, 0], con_nmi[:, 1], alpha=0.2)
     plt.title(
         f"ds:{N, beta_count, samples, set_size}, shown: {logs["samples_shown"]} $\\beta$ {c.train_beta_temps}"
     )
