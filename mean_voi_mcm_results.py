@@ -47,15 +47,20 @@ if __name__ == "__main__":
 
     betas = sorted(output_set.keys())
 
+    voi_measurements = np.empty((len(betas), samples))
     mean_voi = np.empty(len(betas))
     std_voi = np.empty(len(betas))
 
+    nmi_measurements = np.empty((len(betas), samples))
     mean_nmi = np.empty(len(betas))
     std_nmi = np.empty(len(betas))
 
     for i, beta in enumerate(betas):
         vois = batch_normalized_vi(np.array(output_set[beta]), targets[tgt_set[beta]])
         nmis = batch_normalized_mi(np.array(output_set[beta]), targets[tgt_set[beta]])
+
+        voi_measurements[i] = vois
+        nmi_measurements[i] = nmis
 
         mean_voi[i] = vois.mean()
         std_voi[i] = vois.std()
@@ -74,4 +79,6 @@ if __name__ == "__main__":
         std_voi=std_voi,
         mean_nmi=mean_nmi,
         std_nmi=std_nmi,
+        vois = voi_measurements,
+        nmis = nmi_measurements,
     )
