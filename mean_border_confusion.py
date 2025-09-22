@@ -40,7 +40,18 @@ if __name__ == "__main__":
             pred_labels.extend(out_borders)
 
         cm = confusion_matrix(true_labels, pred_labels, labels=np.arange(N))
-        conf_mats.append(cm)
+
+        # ignore correct predictions
+        cm_normalized = cm.copy()
+        np.fill_diagonal(cm_normalized, 0)
+
+        # normalize rows to percentages
+        with np.errstate(all="ignore"):
+            cm_normalized = cm_normalized.astype(float) / cm.sum(axis=1, keepdims=True)
+            cm_normalized = np.nan_to_num(cm_normalized)
+
+
+        conf_mats.append(cm_normalized)
 
     # ---- PLOT ----
     n_betas = len(betas)
@@ -51,7 +62,16 @@ if __name__ == "__main__":
     axes = np.array(axes).reshape(-1)
 
     for ax, beta, cm in zip(axes, betas, conf_mats):
-        sns.heatmap(cm, ax=ax, cmap="Blues", cbar=False)
+        sns.heatmap(
+            cm * 100,  # show as %
+            ax=ax,
+            cmap="Reds",
+            cbar=False,
+            annot=True,
+            fmt=".1f",
+            xticklabels=np.arange(N),
+            yticklabels=np.arange(N),
+        )
         ax.set_title(f"$\\beta$={beta}")
         ax.set_xlabel("Predicted")
         ax.set_ylabel("True")
@@ -67,6 +87,6 @@ if __name__ == "__main__":
     )
 
     plt.tight_layout(rect=[0, 0, 1, 0.95])
-    plt.savefig(f"results/pma/confusion_matrices__{c.model_id}__{c.train_id}")
+    plt.savefig(f"results/pma/masked_confusion_matrices__{c.model_id}__{c.train_id}")
     plt.close()
 
