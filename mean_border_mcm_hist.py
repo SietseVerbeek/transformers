@@ -29,7 +29,7 @@ if __name__ == "__main__":
         for border in borders:
             tgt, out = tgt_output_from_dict(file, border, beta)
             out_borders = np.argmax(out, axis=-1)
-            tmp_border_dists = np.abs(out_borders - (border % N))
+            tmp_border_dists = out_borders - (border % N)
             border_dists = np.concatenate([border_dists, tmp_border_dists])
         all_border_dists.append(border_dists)
 
