@@ -40,6 +40,7 @@ if __name__ == "__main__":
             src_full, tgt_full = src_tgt_from_dict(file, border, beta)
             key_prefix = key_from_border_beta(border, beta)
             save_dict[key_prefix + "tgt"] = tgt_full
+            save_dict[key_prefix + "fail_count"] = 0
 
             out = np.empty_like(tgt_full)
 
@@ -47,8 +48,11 @@ if __name__ == "__main__":
                 data = Data(src, N, 2)
                 best = search.exhaustive(data)
                 borders = np.argmax(best.array, axis=-1)
+                fail = np.any(np.logical_and(np.any(best.array[:, :border], axis=-1), np.any(best.array[:, border:], axis=-1)))
                 closest = borders[np.argmin(np.abs(borders - border))]
                 out[i] = labelings[(closest - 1) % 10]
+                if fail:
+                    save_dict[key_prefix + "fail_count"] += 1
 
             voi = batch_normalized_vi(out, tgt_full)
             nmi = batch_normalized_mi(out, tgt_full)
