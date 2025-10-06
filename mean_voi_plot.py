@@ -15,14 +15,14 @@ from utils.training import generate_predictions
 
 
 if __name__ == "__main__":
-    device = "cuda"
+    device = "cpu"
     model, c, logs = pma_from_config(device)
 
     N = c.N_sites
 
-    beta_count = 20
-    samples = 1000
-    set_size = 50
+    beta_count = 5
+    samples = 200
+    set_size = 25
 
     file = np.load(
         f"results/pma/predictions/dataset__N_{N}__beta_{beta_count}__set_{set_size}__samples_{samples}__{c.model_id}__{c.train_id}.npz"
@@ -30,10 +30,12 @@ if __name__ == "__main__":
 
     borders, betas = get_borders_betas(file)
 
+    correct_voi = np.empty_like(betas)
     mean_vi = np.empty_like(betas)
     stds_vi = np.empty_like(betas)
     con_vi = np.empty((len(betas), 2))
 
+    correct_nmi = np.empty_like(betas)
     mean_nmi = np.empty_like(betas)
     stds_nmi = np.empty_like(betas)
     con_nmi = np.empty((len(betas), 2))
@@ -48,30 +50,54 @@ if __name__ == "__main__":
             var_of_info = np.concat([var_of_info, voi_temp])
             nmi = np.concat([nmi, nmi_temp])
 
+        correct_voi[i] = np.mean(var_of_info == 1)
         mean_vi[i] = var_of_info.mean()
         stds_vi[i] = var_of_info.std()
         con_vi[i] = np.percentile(var_of_info, [2.5, 97.5])
 
+        correct_nmi[i] = np.mean(nmi == 0)
         mean_nmi[i] = nmi.mean()
         stds_nmi[i] = nmi.std()
         con_nmi[i] = np.percentile(nmi, [2.5, 97.5])
 
+    fig, axes = plt.subplots(1, 2, figsize=(12, 4), sharex=True)
 
-    plt.errorbar(betas, mean_vi, yerr=stds_vi)
-    plt.xlabel("$\\beta$")
-    plt.ylabel("VOI")
-    plt.fill_between(betas, con_vi[:, 0], con_vi[:, 1], alpha=0.2)
-    plt.title(
+    axes[0].plot(betas, mean_vi)
+    axes[0].set_xlabel("$\\beta$")
+    axes[0].set_ylabel("VOI")
+    # plt.fill_between(betas, con_vi[:, 0], con_vi[:, 1], alpha=0.2)
+    axes[0].set_title(
         f"ds:{N, beta_count, samples, set_size}, shown: {logs["samples_shown"]} $\\beta$ {c.train_beta_temps}"
     )
+
+    axes[1].plot(betas, correct_voi, label="Fraction Correct", color="tab:green")
+    axes[1].set_xlabel("$\\beta$")
+    axes[1].set_ylabel("Fraction Correct")
+    axes[1].legend()
+
+    # share axis, so flip only one
+    axes[0].invert_xaxis()
+    plt.tight_layout()
     plt.savefig(f"results/pma/mean_voi_beta__{c.model_id}__{c.train_id}")
-    plt.clf()
+    plt.close()
 
-    plt.errorbar(betas, mean_nmi, yerr=stds_nmi)
-    plt.xlabel("$\\beta$")
-    plt.ylabel("NMI")
-    plt.fill_between(betas, con_nmi[:, 0], con_nmi[:, 1], alpha=0.2)
-    plt.title(
+    fig, axes = plt.subplots(1, 2, figsize=(12, 4), sharex=True)
+
+    axes[0].plot(betas, mean_nmi)
+    axes[0].set_xlabel("$\\beta$")
+    axes[0].set_ylabel("NMI")
+    # plt.fill_between(betas, con_vi[:, 0], con_vi[:, 1], alpha=0.2)
+    axes[0].set_title(
         f"ds:{N, beta_count, samples, set_size}, shown: {logs["samples_shown"]} $\\beta$ {c.train_beta_temps}"
     )
+
+    axes[1].plot(betas, correct_nmi, label="Fraction Correct", color="tab:green")
+    axes[1].set_xlabel("$\\beta$")
+    axes[1].set_ylabel("Fraction Correct")
+    axes[1].legend()
+
+    # share axis, so flip only one
+    axes[0].invert_xaxis()
+    plt.tight_layout()
     plt.savefig(f"results/pma/mean_nmi_beta__{c.model_id}__{c.train_id}")
+    plt.close()
